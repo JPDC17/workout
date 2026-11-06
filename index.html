@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Workout Creator</title>
 <script>
   // Apply the theme before the page draws, so it doesn't flash
@@ -37,13 +37,13 @@
     --accent-soft: #2b2340;
   }
   * { box-sizing: border-box; }
-  html { color-scheme: light; scroll-padding-bottom: 140px; }
+  html { color-scheme: light; scroll-padding-bottom: 70px; }
   :root[data-theme="dark"] { color-scheme: dark; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 16px; line-height: 1.4;
     background: var(--bg); color: var(--text);
-    max-width: 800px; margin: 0 auto; padding: 16px 14px 130px;
+    max-width: 800px; margin: 0 auto; padding: 16px 14px 80px;
   }
   header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 0 2px; }
   h1 { margin: 0; font-size: 1.6em; }
@@ -155,21 +155,24 @@
 
   /* Toast + timer */
   #toast {
-    position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 30; max-width: 90%;
+    position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); z-index: 30; max-width: 90%;
     background: var(--accent); color: var(--accent-text); padding: 8px 14px; border-radius: 8px;
     opacity: 0; pointer-events: none; transition: opacity 0.2s;
   }
   #toast.show { opacity: 1; }
-  #timer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--border); padding: 8px 14px; }
-  #timer .inner { max-width: 800px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  #timer .label { color: var(--muted); }
-  #timerDisplay { font-size: 1.6em; font-weight: bold; min-width: 70px; font-variant-numeric: tabular-nums; }
+  #timer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--border);
+    padding: 4px 10px calc(4px + env(safe-area-inset-bottom));
+  }
+  #timer .inner { max-width: 800px; margin: 0 auto; display: flex; align-items: center; gap: 4px; }
+  #timer button { min-height: 34px; padding: 2px 6px; font-size: 15px; flex: 1 1 0; min-width: 0; }
+  #timer .icon-btn { flex: 0 0 38px; font-size: 19px; line-height: 1; }
+  #timerDisplay { font-size: 1.15em; font-weight: bold; min-width: 48px; font-variant-numeric: tabular-nums; }
   #timer.done { background: var(--accent-soft); }
   #timer.done #timerDisplay { color: var(--accent); }
   footer { margin-top: 30px; text-align: center; }
   @media (max-width: 500px) {
     h1 { font-size: 1.35em; }
-    #timer button { padding: 6px 8px; }
     .ex-body { padding-left: 4px; }
   }
 </style>
@@ -250,19 +253,18 @@
 <!-- Rest timer, pinned to the bottom of the screen -->
 <div id="timer">
   <div class="inner">
-    <span class="label">Rest</span>
-    <span id="timerDisplay">0:00</span>
+    <span id="timerDisplay" title="Rest timer">0:00</span>
     <button onclick="startTimer(30)">30s</button>
     <button onclick="startTimer(60)">60s</button>
     <button onclick="startTimer(90)">90s</button>
     <button onclick="startTimer(120)">2m</button>
-    <button id="pauseBtn" class="primary" onclick="togglePause()">Pause</button>
-    <button onclick="resetTimer()">Reset</button>
+    <button id="pauseBtn" class="primary icon-btn" onclick="togglePause()" aria-label="Pause">&#9208;&#xFE0E;</button>
+    <button class="icon-btn" onclick="resetTimer()" aria-label="Reset" title="Reset">&#8634;</button>
   </div>
 </div>
 
 <script>
-const APP_VERSION = "1.7";
+const APP_VERSION = "1.8";
 const KEYS = { plan: "workoutPlan", log: "workoutLog", body: "workoutBodyweight", settings: "workoutSettings" };
 const BACKUP_EVERY_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -889,7 +891,7 @@ function startTimer(seconds) {
   timerLeft = seconds;
   endTime = Date.now() + seconds * 1000;
   el("timer").classList.remove("done");
-  el("pauseBtn").textContent = "Pause";
+  setPauseButton(false);
   timerId = setInterval(tick, 250);
   showTime();
 }
@@ -911,14 +913,21 @@ function togglePause() {
   paused = !paused;
   if (paused) pausedMs = endTime - Date.now();      // remember exactly how much was left
   else endTime = Date.now() + pausedMs;             // pick up where it left off
-  el("pauseBtn").textContent = paused ? "Resume" : "Pause";
+  setPauseButton(paused);
 }
 
 function resetTimer() {
   clearInterval(timerId); timerId = null; timerLeft = 0; paused = false;
   el("timer").classList.remove("done");
-  el("pauseBtn").textContent = "Pause";
+  setPauseButton(false);
   showTime();
+}
+
+function setPauseButton(isPaused) {
+  const b = el("pauseBtn");
+  b.textContent = isPaused ? "\u25B6\uFE0E" : "\u23F8\uFE0E";   // play / pause symbols (text style, not emoji)
+  b.setAttribute("aria-label", isPaused ? "Resume" : "Pause");
+  b.title = isPaused ? "Resume" : "Pause";
 }
 
 function showTime() {
