@@ -3,11 +3,10 @@
 A basic, single-file workout planner. Open `index.html` in any browser (desktop or phone). There's nothing to install.
 
 - Add, rename, copy, reorder and delete days
-- Add exercises by typing (suggestions appear as you type; press Enter to add), by picking from a list grouped by body part, or type your own
+- Add exercises by picking from a list grouped by body part (it adds as soon as you pick)
 - 150+ exercises grouped by Push / Pull / Legs / Core / Cardio and body part
 - Minimize days (tap the day name) or use Collapse all / Expand all to cut down on scrolling
 - Track sets, reps, weight and notes per exercise
-- "Quick fill" a day with a Push, Pull or Legs template
 - **Workout Log**: press "Log Workout" on a day to save today's date with the sets, reps and weights
 - **Rest timer** pinned to the bottom of the screen (30s / 60s / 90s / 2m), with a beep and a vibration on phones
 - Simple, phone-friendly layout with purple accents

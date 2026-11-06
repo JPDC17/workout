@@ -79,10 +79,7 @@
   .fields .notes { grid-column: 1 / -1; }
   .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .add-row select, .add-row input { flex: 1 1 180px; }
-  .add-row.search-row { flex-wrap: nowrap; }
-  .add-row .search { flex: 1 1 auto; min-width: 0; }
-  .add-row .search + button { flex: 0 0 auto; }
-  .add-row.pick-row select { flex: 1 1 140px; min-width: 0; }
+  .add-row.pick-row select { flex: 1 1 100%; min-width: 0; }
   .exercise.new { animation: flash 1s ease-out; }
   @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
   .add-row .full { flex: 1 1 100%; }
@@ -163,7 +160,7 @@
 </div>
 
 <script>
-const APP_VERSION = "1.5";
+const APP_VERSION = "1.6";
 
 // ---------- Dark mode ----------
 function setTheme(t) {
@@ -193,12 +190,6 @@ const LIBRARY = {
   "Cardio / Conditioning": ["Treadmill", "Incline Walk", "Stationary Bike", "Rowing Machine", "Stair Climber", "Elliptical", "Jump Rope", "Burpees", "Sled Push", "Battle Ropes", "Box Jumps"]
 };
 
-// Quick templates for a full day
-const TEMPLATES = {
-  "Push": ["Bench Press", "Overhead Press", "Incline Dumbbell Press", "Lateral Raise", "Tricep Pushdown"],
-  "Pull": ["Deadlift", "Pull-Ups", "Barbell Row", "Face Pulls", "Barbell Curl"],
-  "Legs": ["Squat", "Romanian Deadlift", "Leg Press", "Lying Leg Curl", "Standing Calf Raise"]
-};
 
 const PLAN_KEY = "workoutPlan";
 const LOG_KEY = "workoutLog";
@@ -297,14 +288,6 @@ function duplicateDay(i) {
   save(); render();
 }
 
-function applyTemplate(i, key) {
-  if (!key) return;
-  TEMPLATES[key].forEach(n => plan[i].exercises.push(newExercise(n)));
-  plan[i].collapsed = false;
-  save(); render();
-  setStatus("Added the " + key + " exercises to " + plan[i].name + ".");
-}
-
 // ---------- Minimize days ----------
 function toggleDay(i) {
   plan[i].collapsed = !plan[i].collapsed;
@@ -317,25 +300,7 @@ function setAllCollapsed(value) {
 }
 
 // ---------- Exercises ----------
-// Find a library exercise by name, ignoring upper/lower case
-function findExercise(text) {
-  const t = text.trim().toLowerCase();
-  for (const cat in LIBRARY) {
-    const hit = LIBRARY[cat].find(n => n.toLowerCase() === t);
-    if (hit) return hit;
-  }
-  return null;
-}
-
 let focusAfterRender = null, flashExercise = null;
-
-// Add from the search box: a library name, or anything else as a custom exercise
-function addFromSearch(i) {
-  const input = document.getElementById("search-" + i);
-  const text = input.value.trim();
-  if (!text) { input.focus(); return; }
-  pushExercise(i, findExercise(text) || text, "search-" + i);
-}
 
 // Add straight away when something is picked from the body-part list
 function addFromPicker(i, select) {
@@ -506,20 +471,8 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-// One shared list of suggestions for every search box
-function buildDatalist() {
-  const list = document.createElement("datalist");
-  list.id = "exerciseList";
-  for (const cat in LIBRARY) LIBRARY[cat].forEach(n => {
-    const o = document.createElement("option");
-    o.value = n; o.label = cat;
-    list.appendChild(o);
-  });
-  document.body.appendChild(list);
-}
-
 function exerciseOptions() {
-  let html = '<option value="">By body part...</option>';
+  let html = '<option value="">+ Add exercise (by body part)...</option>';
   for (const cat in LIBRARY) {
     html += '<optgroup label="' + esc(cat) + '">';
     LIBRARY[cat].forEach(n => html += '<option>' + esc(n) + '</option>');
@@ -581,18 +534,9 @@ function render() {
         <button onclick="duplicateDay(${i})">Copy</button>
         <button class="danger" onclick="deleteDay(${i})">Delete Day</button>
       </div>
-      ${exercises || '<p class="muted empty">No exercises yet. Search below, browse by body part, or use Quick fill.</p>'}
-      <div class="add-row search-row">
-        <input class="search" id="search-${i}" list="exerciseList" placeholder="Type an exercise, then Enter" autocomplete="off"
-               enterkeyhint="done" onkeydown="if (event.key === 'Enter') addFromSearch(${i})">
-        <button class="primary" onclick="addFromSearch(${i})">+ Add</button>
-      </div>
+      ${exercises || '<p class="muted empty">No exercises yet. Pick one from the list below.</p>'}
       <div class="add-row pick-row">
         <select id="pick-${i}" onchange="addFromPicker(${i}, this)">${options}</select>
-        <select onchange="applyTemplate(${i}, this.value)">
-          <option value="">Quick fill...</option>
-          <option>Push</option><option>Pull</option><option>Legs</option>
-        </select>
       </div>
       <div class="add-row">
         <button class="primary full" onclick="logWorkout(${i})">Log Workout (done today)</button>
@@ -630,7 +574,6 @@ function renderLog() {
 
 document.getElementById("newDayName").addEventListener("keydown", e => { if (e.key === "Enter") addDay(); });
 setTheme(document.documentElement.getAttribute("data-theme"));
-buildDatalist();
 document.getElementById("version").textContent = "Workout Creator - Version " + APP_VERSION;
 render();
 renderLog();
