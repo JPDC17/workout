@@ -48,52 +48,118 @@
   header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 0 2px; }
   h1 { margin: 0; font-size: 1.6em; }
   h2 { font-size: 1.15em; margin: 0; }
+  h3 { font-size: 0.85em; margin: 14px 0 6px; color: var(--muted); font-weight: 600; }
   button, select, input { font: inherit; font-size: 16px; min-height: 40px; padding: 6px 10px; border-radius: 6px; }
   input, select { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); }
   input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   button { background: var(--card); color: var(--text); border: 1px solid var(--border); cursor: pointer; }
   button:hover { border-color: var(--accent); }
-  button.primary, button.success { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
   button.danger { color: var(--accent); }
-  button.icon { min-width: 40px; padding: 6px; }
   .bar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-  .bar > input { flex: 1 1 200px; }
+  .bar > input { flex: 1 1 160px; min-width: 0; }
   .section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 14px 0; }
-  .day-title {
-    display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
-    background: none; border: none; padding: 4px 0; min-height: 40px; color: var(--text);
-  }
-  .day-title:hover { border: none; }
-  .day-title h2 { flex: 1; }
-  .day-title .arrow { color: var(--accent); width: 1em; display: inline-block; transition: transform 0.15s; }
-  .day.collapsed .day-title .arrow { transform: rotate(-90deg); }
-  .day-summary { margin: 2px 0 0 24px; }
-  .day-buttons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .exercise { border-top: 1px solid var(--border); padding: 10px 0; }
-  .exercise-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-  .exercise-top .actions { display: flex; gap: 4px; }
-  .exercise-top .actions button { min-height: 34px; min-width: 34px; padding: 2px; }
-  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
-  .fields label { font-size: 0.8em; color: var(--muted); }
-  .fields input { width: 100%; }
-  .fields .notes { grid-column: 1 / -1; }
-  .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .add-row select, .add-row input { flex: 1 1 180px; }
-  .add-row.pick-row select { flex: 1 1 100%; min-width: 0; }
-  .exercise.new { animation: flash 1s ease-out; }
-  @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
-  .add-row .full { flex: 1 1 100%; }
   .muted { color: var(--muted); font-size: 0.9em; }
   .tag { font-size: 0.8em; color: var(--accent); }
-  .empty { padding: 10px 0; }
+  .pr { display: inline-block; font-size: 0.75em; font-weight: bold; color: var(--accent-text); background: var(--accent); border-radius: 4px; padding: 1px 5px; }
+  .empty { padding: 10px 0; margin: 0; }
+
+  /* Days */
+  .day-head { display: flex; align-items: center; gap: 4px; }
+  .handle {
+    border: none; background: none; color: var(--muted); font-size: 1.3em; line-height: 1;
+    min-width: 32px; min-height: 40px; padding: 0; cursor: grab; touch-action: none; user-select: none;
+  }
+  .handle:hover { border: none; color: var(--accent); }
+  .day-title {
+    display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; text-align: left;
+    background: none; border: none; padding: 4px 0; color: var(--text);
+  }
+  .day-title:hover { border: none; }
+  .day-title h2 { flex: 1; overflow-wrap: anywhere; }
+  .day-title .arrow { color: var(--accent); width: 1em; display: inline-block; transition: transform 0.15s; }
+  .day.collapsed .day-title .arrow { transform: rotate(-90deg); }
+  .day-summary { margin: 2px 0 0 36px; }
+  .day-buttons { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .day-buttons button { flex: 1 1 auto; }
+
+  /* Exercises */
+  .exercise { border-top: 1px solid var(--border); padding: 6px 0; background: var(--card); }
+  .exercise.new { animation: flash 1s ease-out; }
+  @keyframes flash { from { background: var(--accent-soft); } to { background: var(--card); } }
+  .ex-head { display: flex; align-items: flex-start; gap: 4px; }
+  .ex-title {
+    flex: 1; min-width: 0; text-align: left; background: none; border: none; padding: 6px 0; color: var(--text);
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .ex-title:hover { border: none; }
+  .ex-title .line1 { display: flex; justify-content: space-between; gap: 8px; }
+  .ex-title strong { overflow-wrap: anywhere; }
+  .ex-body { padding: 4px 0 6px 36px; }
+  .hint { background: var(--accent-soft); border-radius: 6px; padding: 6px 10px; margin: 4px 0 8px; font-size: 0.9em; }
+  .set-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+  .set-n { width: 18px; color: var(--muted); font-size: 0.9em; text-align: right; flex: 0 0 auto; }
+  .set-row input { flex: 1 1 0; min-width: 0; width: 0; }
+  .set-row .x { color: var(--muted); }
+  .set-row.done input { background: var(--accent-soft); }
+  .tick { flex: 0 0 44px; padding: 0; font-weight: bold; color: var(--muted); }
+  .tick.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .mini { min-height: 32px; min-width: 32px; padding: 0 6px; }
+  .plan-fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+  .plan-fields label { font-size: 0.8em; color: var(--muted); }
+  .plan-fields select, .plan-fields input { width: 100%; min-width: 0; padding: 6px 4px; }
+  .plan-fields .notes { grid-column: 1 / -1; }
+  .row-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .full { flex: 1 1 100%; }
+
+  /* Dragging */
+  body.is-dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+  body.is-dragging .day, body.is-dragging .exercise { transition: transform 0.15s; }
+  .dragging { position: relative; z-index: 5; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); transition: none !important; }
+
+  /* Log, bodyweight, backup */
   details { border-top: 1px solid var(--border); padding: 4px 0; }
   summary { cursor: pointer; padding: 6px 0; }
   details ul { margin: 4px 0 8px; padding-left: 20px; }
+  .bw-list { list-style: none; padding: 0; margin: 8px 0 0; }
+  .bw-list li { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border); padding: 4px 0; }
+  .bw-list li span:first-child { flex: 1; }
+  .banner { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px; padding: 10px 12px; margin: 12px 0; }
+  .banner .bar { margin-bottom: 0; }
   .file-label {
     display: inline-flex; align-items: center; min-height: 40px; padding: 6px 10px; border-radius: 6px;
     background: var(--card); color: var(--text); border: 1px solid var(--border); cursor: pointer;
   }
   .file-label input { display: none; }
+
+  /* Exercise library panel */
+  body.sheet-open { overflow: hidden; }
+  #sheet { position: fixed; inset: 0; z-index: 20; background: rgba(10, 8, 16, 0.45); display: flex; align-items: flex-end; justify-content: center; }
+  #sheet[hidden] { display: none; }
+  .sheet-panel {
+    background: var(--card); width: 100%; max-width: 800px; max-height: 88vh; display: flex; flex-direction: column;
+    border-radius: 12px 12px 0 0; border: 1px solid var(--border);
+  }
+  .sheet-top { padding: 12px 14px 8px; border-bottom: 1px solid var(--border); }
+  .sheet-top .title-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sheet-top input { width: 100%; margin-top: 8px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; }
+  .chips button { flex: 0 0 auto; min-height: 34px; padding: 4px 12px; border-radius: 999px; }
+  .chips button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  #libList { overflow-y: auto; padding: 0 14px 20px; }
+  .lib-items { display: flex; flex-direction: column; }
+  .lib-item { text-align: left; border: none; border-bottom: 1px solid var(--border); border-radius: 0; background: none; display: flex; justify-content: space-between; }
+  .lib-item:hover { border-color: var(--border); color: var(--accent); }
+  .lib-item .tag { white-space: nowrap; }
+
+  /* Toast + timer */
+  #toast {
+    position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 30; max-width: 90%;
+    background: var(--accent); color: var(--accent-text); padding: 8px 14px; border-radius: 8px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  #toast.show { opacity: 1; }
   #timer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--border); padding: 8px 14px; }
   #timer .inner { max-width: 800px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   #timer .label { color: var(--muted); }
@@ -103,8 +169,8 @@
   footer { margin-top: 30px; text-align: center; }
   @media (max-width: 500px) {
     h1 { font-size: 1.35em; }
-    .day-buttons button { flex: 1 1 auto; }
     #timer button { padding: 6px 8px; }
+    .ex-body { padding-left: 4px; }
   }
 </style>
 </head>
@@ -115,6 +181,14 @@
   <button id="themeBtn" onclick="toggleTheme()">Dark mode</button>
 </header>
 <p class="muted" id="status">Changes save automatically in this browser.</p>
+
+<div class="banner" id="backupBanner" hidden>
+  <span class="msg"></span>
+  <div class="bar">
+    <button class="primary" onclick="exportData()">Back up now</button>
+    <button onclick="snoozeBackup()">Remind me later</button>
+  </div>
+</div>
 
 <div class="bar">
   <input id="newDayName" placeholder="Day name (e.g. Monday - Push)">
@@ -129,12 +203,23 @@
 
 <div class="section">
   <h2>Workout Log</h2>
-  <p class="muted">Press "Log Workout" on a day after you finish it. It saves today's date with the sets, reps and weights shown, so update them to what you actually lifted first.</p>
+  <p class="muted">Tap an exercise, enter weight &times; reps and tick &#10003; each set as you go. Press "Finish workout" to save it here.</p>
   <div id="log"></div>
 </div>
 
 <div class="section">
+  <h2>Bodyweight</h2>
+  <div class="bar">
+    <input type="date" id="bwDate" aria-label="Date">
+    <input id="bwWeight" inputmode="decimal" placeholder="Weight (lbs)" aria-label="Bodyweight">
+    <button class="primary" onclick="addBodyweight()">Add</button>
+  </div>
+  <div id="bodyweight"></div>
+</div>
+
+<div class="section">
   <h2>Save / Backup</h2>
+  <p class="muted" id="backupInfo"></p>
   <div class="bar">
     <button class="primary" onclick="saveNow()">Save</button>
     <button onclick="exportData()">Export to File</button>
@@ -144,6 +229,23 @@
 </div>
 
 <footer class="muted" id="version"></footer>
+
+<!-- Exercise library (add or swap) -->
+<div id="sheet" hidden onclick="if (event.target === this) closeLibrary()">
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-top">
+      <div class="title-row">
+        <h2 id="sheetTitle">Add exercise</h2>
+        <button class="primary" onclick="closeLibrary()">Done</button>
+      </div>
+      <input id="libSearch" type="search" placeholder="Search (optional)" autocomplete="off" oninput="lib.query = this.value; renderLibrary()">
+      <div class="chips" id="libChips"></div>
+    </div>
+    <div id="libList"></div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- Rest timer, pinned to the bottom of the screen -->
 <div id="timer">
@@ -160,12 +262,15 @@
 </div>
 
 <script>
-const APP_VERSION = "1.6";
+const APP_VERSION = "1.7";
+const KEYS = { plan: "workoutPlan", log: "workoutLog", body: "workoutBodyweight", settings: "workoutSettings" };
+const BACKUP_EVERY_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------- Dark mode ----------
 function setTheme(t) {
   document.documentElement.setAttribute("data-theme", t);
-  document.getElementById("themeBtn").textContent = t === "dark" ? "Light mode" : "Dark mode";
+  el("themeBtn").textContent = t === "dark" ? "Light mode" : "Dark mode";
 }
 function toggleTheme() {
   const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -189,75 +294,225 @@ const LIBRARY = {
   "Core": ["Plank", "Side Plank", "Crunches", "Bicycle Crunch", "Hanging Leg Raise", "Hanging Knee Raise", "Lying Leg Raise", "Russian Twist", "Cable Crunch", "Ab Wheel", "Dead Bug", "Bird Dog", "Mountain Climbers", "Pallof Press", "Cable Woodchopper", "V-Ups", "Hollow Body Hold", "Sit-Ups"],
   "Cardio / Conditioning": ["Treadmill", "Incline Walk", "Stationary Bike", "Rowing Machine", "Stair Climber", "Elliptical", "Jump Rope", "Burpees", "Sled Push", "Battle Ropes", "Box Jumps"]
 };
+const GROUPS = ["Push", "Pull", "Legs", "Core", "Cardio"];
+const EFFORT_OPTIONS = ["RIR 0", "RIR 1", "RIR 2", "RIR 3", "RIR 4", "RPE 6", "RPE 7", "RPE 7.5", "RPE 8", "RPE 8.5", "RPE 9", "RPE 9.5", "RPE 10"];
 
-
-const PLAN_KEY = "workoutPlan";
-const LOG_KEY = "workoutLog";
-let plan = cleanPlan(load(PLAN_KEY));
-let log = cleanLog(load(LOG_KEY));
-
-function load(key) {
-  try {
-    const data = JSON.parse(localStorage.getItem(key));
-    if (Array.isArray(data)) return data;
-  } catch (e) {}
-  return [];
+// ---------- Small helpers ----------
+function el(id) { return document.getElementById(id); }
+function uid() { return "e" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function num(v) { const n = parseFloat(v); return isNaN(n) ? null : n; }
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
-
-// Make sure saved or imported data has the right shape, so a bad file can't break the page
-function cleanExercise(e) {
-  if (!e || typeof e !== "object" || !e.name) return null;
-  return {
-    name: String(e.name),
-    category: e.category ? String(e.category) : categoryOf(String(e.name)),
-    sets: e.sets ?? "", reps: e.reps ?? "", weight: e.weight ?? "", notes: e.notes ?? ""
-  };
+function todayStr() {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
-
-function cleanPlan(data) {
-  if (!Array.isArray(data)) return [];
-  return data.filter(d => d && typeof d === "object").map((d, i) => ({
-    name: d.name ? String(d.name) : "Day " + (i + 1),
-    collapsed: !!d.collapsed,
-    exercises: (Array.isArray(d.exercises) ? d.exercises : []).map(cleanExercise).filter(Boolean)
-  }));
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
 }
-
-function cleanLog(data) {
-  if (!Array.isArray(data)) return [];
-  return data.filter(l => l && typeof l === "object" && !isNaN(new Date(l.date))).map(l => ({
-    date: l.date,
-    day: l.day ? String(l.day) : "Workout",
-    exercises: (Array.isArray(l.exercises) ? l.exercises : []).map(cleanExercise).filter(Boolean)
-  }));
+function fmtDay(ymd) { // "2026-11-06" as a local date
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
-
-function save() {
-  try {
-    localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
-    localStorage.setItem(LOG_KEY, JSON.stringify(log));
-    setStatus("Saved " + new Date().toLocaleTimeString());
-  } catch (e) {
-    setStatus("Could not save in this browser. Use Export to File.");
-  }
-}
-
-function setStatus(msg) { document.getElementById("status").textContent = msg; }
 
 function categoryOf(name) {
   for (const cat in LIBRARY) if (LIBRARY[cat].includes(name)) return cat;
   return "Custom";
 }
 
-function newExercise(name) {
-  return { name, category: categoryOf(name), sets: 3, reps: 10, weight: "", notes: "" };
+let toastTimer = null;
+function toast(msg) {
+  const t = el("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+  setStatus(msg);
+}
+function setStatus(msg) { el("status").textContent = msg; }
+
+// ---------- Loading, checking and saving data ----------
+// Everything that is loaded or imported is cleaned first, so old or broken data can't break the page.
+function load(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+}
+
+function cleanSet(s) {
+  return { weight: s && s.weight != null ? String(s.weight) : "", reps: s && s.reps != null ? String(s.reps) : "", done: !!(s && s.done) };
+}
+
+function cleanPlanExercise(e) {
+  if (!e || typeof e !== "object" || !e.name) return null;
+  const legacyReps = num(e.reps);                       // versions before 1.7 had one "reps" number
+  let repMin = num(e.repMin) ?? legacyReps ?? 8;
+  let repMax = num(e.repMax) ?? legacyReps ?? 12;
+  if (repMin > repMax) [repMin, repMax] = [repMax, repMin];
+  return {
+    id: e.id ? String(e.id) : uid(),
+    name: String(e.name),
+    category: e.category ? String(e.category) : categoryOf(String(e.name)),
+    sets: Math.max(1, Math.min(20, Math.round(num(e.sets) ?? 3))),
+    repMin: Math.max(1, Math.round(repMin)),
+    repMax: Math.max(1, Math.round(repMax)),
+    rir: e.rir != null ? String(e.rir) : "",
+    weight: e.weight != null ? String(e.weight) : "",   // planned weight, used as a hint when there's no history
+    notes: e.notes != null ? String(e.notes) : ""
+  };
+}
+
+function cleanPlan(data) {
+  if (!Array.isArray(data)) return [];
+  const seen = new Set();
+  return data.filter(d => d && typeof d === "object").map((d, i) => {
+    const exercises = (Array.isArray(d.exercises) ? d.exercises : []).map(cleanPlanExercise).filter(Boolean);
+    exercises.forEach(e => { while (seen.has(e.id)) e.id = uid(); seen.add(e.id); });
+    let session = null;
+    if (d.session && typeof d.session === "object" && d.session.sets && typeof d.session.sets === "object") {
+      session = { started: String(d.session.started || new Date().toISOString()), sets: {} };
+      exercises.forEach(e => {
+        const list = d.session.sets[e.id];
+        if (Array.isArray(list)) session.sets[e.id] = list.slice(0, 30).map(cleanSet);
+      });
+    }
+    return { name: d.name ? String(d.name) : "Day " + (i + 1), collapsed: !!d.collapsed, exercises, session };
+  });
+}
+
+function cleanLogExercise(e) {
+  if (!e || typeof e !== "object" || !e.name) return null;
+  let sets;
+  if (Array.isArray(e.sets)) {
+    sets = e.sets.filter(s => s && typeof s === "object").map(s => ({
+      weight: s.weight != null ? String(s.weight) : "", reps: s.reps != null ? String(s.reps) : "", pr: !!s.pr
+    }));
+  } else {
+    // Logs from versions before 1.7 stored "3 sets of 10 at 135" — turn that into 3 set entries
+    const n = Math.max(0, Math.min(20, Math.round(num(e.sets) ?? 0)));
+    sets = Array.from({ length: n }, () => ({
+      weight: e.weight != null ? String(e.weight) : "", reps: e.reps != null ? String(e.reps) : "", pr: false
+    }));
+  }
+  return { name: String(e.name), sets, notes: e.notes ? String(e.notes) : "" };
+}
+
+function cleanLog(data) {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(l => l && typeof l === "object" && l.date && !isNaN(new Date(l.date)))
+    .map(l => ({
+      date: String(l.date),
+      day: l.day ? String(l.day) : "Workout",
+      exercises: (Array.isArray(l.exercises) ? l.exercises : []).map(cleanLogExercise).filter(Boolean)
+    }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+function cleanBody(data) {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(b => b && /^\d{4}-\d{2}-\d{2}$/.test(b.date) && num(b.weight) > 0)
+    .map(b => ({ date: b.date, weight: num(b.weight) }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function loadSettings() {
+  const s = load(KEYS.settings) || {};
+  return { lastBackup: s.lastBackup || null, snoozeUntil: s.snoozeUntil || null };
+}
+
+let plan = cleanPlan(load(KEYS.plan));
+let log = cleanLog(load(KEYS.log));
+let bodyweight = cleanBody(load(KEYS.body));
+let settings = loadSettings();
+
+function save() {
+  try {
+    localStorage.setItem(KEYS.plan, JSON.stringify(plan));
+    localStorage.setItem(KEYS.log, JSON.stringify(log));
+    localStorage.setItem(KEYS.body, JSON.stringify(bodyweight));
+    localStorage.setItem(KEYS.settings, JSON.stringify(settings));
+    setStatus("Saved " + new Date().toLocaleTimeString());
+  } catch (e) {
+    setStatus("Could not save in this browser. Use Export to File.");
+  }
+}
+
+// ---------- History, PRs and hints ----------
+function e1rm(weight, reps) { return weight * (1 + reps / 30); } // estimated one-rep max (Epley)
+
+// Most recent logged session for an exercise
+function lastSession(name) {
+  for (const entry of log) {
+    const ex = entry.exercises.find(e => e.name === name && e.sets.some(s => num(s.reps)));
+    if (ex) return { date: entry.date, sets: ex.sets.filter(s => num(s.reps)) };
+  }
+  return null;
+}
+
+// Best set ever logged for an exercise
+function bestSoFar(name) {
+  const best = { e1rm: 0, reps: 0, any: false };
+  for (const entry of log) for (const ex of entry.exercises) {
+    if (ex.name !== name) continue;
+    for (const s of ex.sets) addToBest(best, s);
+  }
+  return best;
+}
+function addToBest(best, s) {
+  const w = num(s.weight), r = num(s.reps);
+  if (!r) return;
+  best.any = true;
+  if (w > 0) best.e1rm = Math.max(best.e1rm, e1rm(w, r));
+  else best.reps = Math.max(best.reps, r);
+}
+
+// Which of today's ticked sets beat everything before them (needs some history to compare with)
+function sessionPRs(name, sets) {
+  const best = bestSoFar(name);
+  if (!best.any) return sets.map(() => false);
+  return sets.map(s => {
+    if (!s.done) return false;
+    const w = num(s.weight), r = num(s.reps);
+    if (!r) return false;
+    const pr = w > 0 ? e1rm(w, r) > best.e1rm + 1e-9 : r > best.reps;
+    addToBest(best, s);
+    return pr;
+  });
+}
+
+// "185 × 8, 8, 7" when the weight is the same, otherwise "185×8, 175×8"
+function formatSets(sets) {
+  const list = sets.filter(s => num(s.reps));
+  if (!list.length) return "";
+  const weights = list.map(s => String(s.weight || "").trim());
+  if (weights.every(w => w === weights[0])) {
+    return weights[0] ? weights[0] + " × " + list.map(s => s.reps).join(", ") : list.map(s => s.reps).join(", ") + " reps";
+  }
+  return list.map(s => (s.weight ? s.weight + "×" : "") + s.reps).join(", ");
+}
+
+// Progressive overload: hit the top of the rep range on every target set last time? Add weight.
+function overloadHint(ex, last) {
+  if (!last || last.sets.length < ex.sets) return "";
+  if (!last.sets.slice(0, ex.sets).every(s => num(s.reps) >= ex.repMax)) return "";
+  return num(last.sets[0].weight) > 0
+    ? `You hit ${ex.repMax}+ reps on every set last time. Add weight today (about +5 lbs).`
+    : `You hit ${ex.repMax}+ reps on every set last time. Add weight or try a harder variation.`;
+}
+
+// What to pre-fill for a set: last session's numbers, or the plan
+function suggestion(ex, n, last) {
+  const s = last && (last.sets[n] || last.sets[last.sets.length - 1]);
+  return { weight: s ? String(s.weight || "") : ex.weight, reps: s ? String(s.reps || "") : String(ex.repMax) };
 }
 
 // ---------- Days ----------
 function addDay() {
-  const input = document.getElementById("newDayName");
+  const input = el("newDayName");
   const name = input.value.trim() || "Day " + (plan.length + 1);
-  plan.push({ name, collapsed: false, exercises: [] });
+  plan.push({ name, collapsed: false, exercises: [], session: null });
   input.value = "";
   save(); render();
 }
@@ -273,22 +528,16 @@ function renameDay(i) {
   if (name && name.trim()) { plan[i].name = name.trim(); save(); render(); }
 }
 
-function moveDay(i, dir) {
-  const j = i + dir;
-  if (j < 0 || j >= plan.length) return;
-  [plan[i], plan[j]] = [plan[j], plan[i]];
-  save(); render();
-}
-
 function duplicateDay(i) {
   const copy = JSON.parse(JSON.stringify(plan[i]));
   copy.name += " (copy)";
   copy.collapsed = false;
+  copy.session = null;
+  copy.exercises.forEach(e => e.id = uid());
   plan.splice(i + 1, 0, copy);
   save(); render();
 }
 
-// ---------- Minimize days ----------
 function toggleDay(i) {
   plan[i].collapsed = !plan[i].collapsed;
   save(); render();
@@ -299,58 +548,334 @@ function setAllCollapsed(value) {
   save(); render();
 }
 
-// ---------- Exercises ----------
-let focusAfterRender = null, flashExercise = null;
+// ---------- Exercises (planning) ----------
+const openExercises = new Set();   // which exercises are tapped open (not saved)
+let flashId = null;
 
-// Add straight away when something is picked from the body-part list
-function addFromPicker(i, select) {
-  if (!select.value) return;
-  pushExercise(i, select.value, "pick-" + i);
+function findEx(i, id) { return plan[i].exercises.find(e => e.id === id); }
+
+function newExercise(name) {
+  return { id: uid(), name, category: categoryOf(name), sets: 3, repMin: 8, repMax: 12, rir: "", weight: "", notes: "" };
 }
 
-function pushExercise(i, name, focusId) {
-  plan[i].exercises.push(newExercise(name));
-  plan[i].collapsed = false;
-  flashExercise = [i, plan[i].exercises.length - 1];
-  focusAfterRender = focusId;
-  save(); render();
-  setStatus("Added " + name + " to " + plan[i].name + ".");
+function toggleExercise(id) {
+  openExercises.has(id) ? openExercises.delete(id) : openExercises.add(id);
+  render();
 }
 
-function deleteExercise(i, k) {
-  plan[i].exercises.splice(k, 1);
-  save(); render();
-}
-
-function moveExercise(i, k, dir) {
-  const list = plan[i].exercises, j = k + dir;
-  if (j < 0 || j >= list.length) return;
-  [list[k], list[j]] = [list[j], list[k]];
+function deleteExercise(i, id) {
+  const ex = findEx(i, id);
+  if (!confirm("Remove " + ex.name + " from " + plan[i].name + "?")) return;
+  plan[i].exercises = plan[i].exercises.filter(e => e.id !== id);
+  if (plan[i].session) delete plan[i].session.sets[id];
   save(); render();
 }
 
-function updateField(i, k, field, value) {
-  plan[i].exercises[k][field] = value;
+function updatePlan(i, id, field, value) {
+  const ex = findEx(i, id);
+  if (field === "rir") ex.rir = value;
+  else ex[field] = Number(value);
+  if (field === "repMin" && ex.repMin > ex.repMax) ex.repMax = ex.repMin;
+  if (field === "repMax" && ex.repMax < ex.repMin) ex.repMin = ex.repMax;
+  save(); render();
+}
+
+function updateNotes(i, id, value) {
+  findEx(i, id).notes = value;
   save(); // no re-render so typing isn't interrupted
 }
 
-// ---------- Workout log ----------
-function logWorkout(i) {
+// ---------- Logging sets ----------
+function rowsFor(day, ex) {
+  const list = (day.session && day.session.sets[ex.id]) || [];
+  const rows = [];
+  for (let n = 0; n < Math.max(ex.sets, list.length); n++) rows.push(list[n] || { weight: "", reps: "", done: false });
+  return rows;
+}
+
+function editableSets(i, id) {
+  const day = plan[i], ex = findEx(i, id);
+  if (!day.session) day.session = { started: new Date().toISOString(), sets: {} };
+  const list = day.session.sets[id] || (day.session.sets[id] = []);
+  while (list.length < ex.sets) list.push({ weight: "", reps: "", done: false });
+  return list;
+}
+
+function updateSet(i, id, n, field, value) {
+  editableSets(i, id)[n][field] = value;
+  save(); // no re-render so typing isn't interrupted
+}
+
+function toggleDone(i, id, n) {
+  const ex = findEx(i, id);
+  const set = editableSets(i, id)[n];
+  if (set.done) {
+    set.done = false;
+  } else {
+    // Ticking an empty set fills in last time's numbers
+    const sug = suggestion(ex, n, lastSession(ex.name));
+    if (!String(set.weight).trim() && sug.weight) set.weight = sug.weight;
+    if (!String(set.reps).trim()) set.reps = sug.reps;
+    if (!num(set.reps)) { toast("Enter the reps for this set first."); return; }
+    set.done = true;
+  }
+  save(); render();
+  if (set.done) {
+    const prs = sessionPRs(ex.name, editableSets(i, id));
+    toast(prs[n] ? "New PR on " + ex.name + "!" : "Set " + (n + 1) + " done.");
+  }
+}
+
+function addSetRow(i, id) {
+  const list = editableSets(i, id);
+  const prev = list[list.length - 1];
+  list.push({ weight: prev ? prev.weight : "", reps: "", done: false });
+  save(); render();
+}
+
+function removeSetRow(i, id, n) {
+  editableSets(i, id).splice(n, 1);
+  save(); render();
+}
+
+function doneCount(day) {
+  if (!day.session) return 0;
+  return Object.values(day.session.sets).reduce((n, list) => n + list.filter(s => s.done).length, 0);
+}
+
+function finishWorkout(i) {
   const day = plan[i];
-  if (!day.exercises.length) { alert("Add some exercises before logging."); return; }
-  log.unshift({
-    date: new Date().toISOString(),
-    day: day.name,
-    exercises: day.exercises.map(e => ({ name: e.name, sets: e.sets, reps: e.reps, weight: e.weight, notes: e.notes }))
+  const exercises = [];
+  let prCount = 0;
+  day.exercises.forEach(ex => {
+    const list = (day.session && day.session.sets[ex.id]) || [];
+    const prs = sessionPRs(ex.name, list);
+    const sets = [];
+    list.forEach((s, n) => {
+      if (s.done && num(s.reps)) {
+        sets.push({ weight: String(s.weight).trim(), reps: String(s.reps).trim(), pr: prs[n] });
+        if (prs[n]) prCount++;
+      }
+    });
+    if (sets.length) exercises.push({ name: ex.name, sets, notes: ex.notes });
   });
-  save(); renderLog();
-  setStatus("Logged " + day.name + " for today.");
+  if (!exercises.length) { toast("Tick off at least one set (✓) before finishing."); return; }
+  log.unshift({ date: new Date().toISOString(), day: day.name, exercises });
+  day.session = null;
+  day.exercises.forEach(ex => openExercises.delete(ex.id));
+  save(); render(); renderLog(); renderBackupBanner();
+  toast("Workout saved" + (prCount ? " — " + plural(prCount, "new PR") + "!" : "."));
+}
+
+function discardSession(i) {
+  if (!confirm("Clear the sets you've entered for " + plan[i].name + "? Nothing will be saved to the log.")) return;
+  plan[i].session = null;
+  save(); render();
 }
 
 function deleteLogEntry(n) {
   if (!confirm("Delete this log entry?")) return;
   log.splice(n, 1);
-  save(); renderLog();
+  save(); render(); renderLog(); // render too, so "Last" and PRs update
+}
+
+// ---------- Exercise library (add / swap) ----------
+let lib = { mode: "add", day: 0, exId: null, group: "All", query: "" };
+
+function openLibrary(mode, i, exId) {
+  const ex = exId ? findEx(i, exId) : null;
+  lib = { mode, day: i, exId: exId || null, group: ex && ex.category !== "Custom" ? "Similar" : "All", query: "" };
+  el("libSearch").value = "";
+  el("sheet").hidden = false;
+  document.body.classList.add("sheet-open");
+  renderLibrary();
+}
+
+function closeLibrary() {
+  el("sheet").hidden = true;
+  document.body.classList.remove("sheet-open");
+}
+
+function setLibGroup(g) { lib.group = g; renderLibrary(); el("libList").scrollTop = 0; }
+
+function renderLibrary() {
+  const day = plan[lib.day];
+  const current = lib.mode === "swap" ? findEx(lib.day, lib.exId) : null;
+  el("sheetTitle").textContent = current ? "Swap " + current.name : "Add to " + day.name;
+
+  const groups = (current && current.category !== "Custom" ? ["Similar"] : []).concat(["All"], GROUPS);
+  el("libChips").innerHTML = groups.map(g =>
+    `<button class="${g === lib.group ? "on" : ""}" onclick="setLibGroup('${g}')">${g === "Similar" ? "Alternatives" : g}</button>`).join("");
+
+  const q = lib.query.trim().toLowerCase();
+  const inDay = new Set(day.exercises.map(e => e.name));
+  let html = "";
+  for (const cat in LIBRARY) {
+    if (!q) {
+      if (lib.group === "Similar" && cat !== current.category) continue;
+      if (GROUPS.includes(lib.group) && !cat.startsWith(lib.group)) continue;
+    }
+    const names = LIBRARY[cat].filter(n =>
+      (!q || n.toLowerCase().includes(q) || cat.toLowerCase().includes(q)) && !(current && n === current.name));
+    if (!names.length) continue;
+    html += `<h3>${esc(cat)}</h3><div class="lib-items">` + names.map(n =>
+      `<button class="lib-item" data-name="${esc(n)}"><span>${esc(n)}</span>${inDay.has(n) ? '<span class="tag">&#10003; in day</span>' : ""}</button>`
+    ).join("") + "</div>";
+  }
+  el("libList").innerHTML = html || '<p class="muted empty">No exercises match. Try another group or search.</p>';
+}
+
+function pickFromLibrary(name) {
+  const i = lib.day, day = plan[i];
+  if (lib.mode === "swap") {
+    const ex = findEx(i, lib.exId);
+    const old = ex.name;
+    ex.name = name;
+    ex.category = categoryOf(name);
+    if (day.session) delete day.session.sets[ex.id];
+    flashId = ex.id;
+    closeLibrary();
+    save(); render();
+    toast("Swapped " + old + " for " + name + ".");
+  } else {
+    const ex = newExercise(name);
+    day.exercises.push(ex);
+    day.collapsed = false;
+    flashId = ex.id;
+    save(); render(); renderLibrary();
+    toast("Added " + name + ".");
+  }
+}
+
+// ---------- Drag to reorder (days and exercises; works with touch and mouse) ----------
+let drag = null;
+
+function dragStart(e, kind, i, k) {
+  if (e.button > 0) return;
+  e.preventDefault();
+  const container = kind === "day" ? el("days") : document.querySelector(`.day[data-day="${i}"] .ex-list`);
+  const items = [...container.children];
+  if (items.length < 2) return;
+  const from = kind === "day" ? i : k;
+  const rects = items.map(it => it.getBoundingClientRect());
+  drag = {
+    kind, i, from, to: from, items, el: items[from], pointerY: e.clientY,
+    tops: rects.map(r => r.top + scrollY), heights: rects.map(r => r.height),
+    startY: e.clientY + scrollY, raf: 0
+  };
+  drag.space = Math.max(0, drag.tops[1] - drag.tops[0] - drag.heights[0]);
+  drag.el.classList.add("dragging");
+  document.body.classList.add("is-dragging");
+  addEventListener("pointermove", dragMove, { passive: false });
+  addEventListener("pointerup", dragEnd);
+  addEventListener("pointercancel", dragEnd);
+  drag.raf = requestAnimationFrame(autoScroll);
+}
+
+function dragMove(e) {
+  if (!drag) return;
+  e.preventDefault();
+  drag.pointerY = e.clientY;
+  layoutDrag();
+}
+
+function layoutDrag() {
+  const d = drag;
+  const dy = d.pointerY + scrollY - d.startY;
+  d.el.style.transform = `translateY(${dy}px)`;
+  const center = d.tops[d.from] + d.heights[d.from] / 2 + dy;
+  d.to = d.items.filter((it, j) => j !== d.from && d.tops[j] + d.heights[j] / 2 < center).length;
+  const gap = d.heights[d.from] + d.space;
+  d.items.forEach((it, j) => {
+    if (j === d.from) return;
+    const shift = (d.from < j && j <= d.to) ? -gap : (d.to <= j && j < d.from) ? gap : 0;
+    it.style.transform = shift ? `translateY(${shift}px)` : "";
+  });
+}
+
+function autoScroll() {
+  if (!drag) return;
+  // Scroll when the finger is near the top, or just above the timer bar at the bottom
+  const y = drag.pointerY, top = 60, bottom = el("timer").getBoundingClientRect().top - 30;
+  const speed = y < top ? -Math.min(20, Math.ceil((top - y) / 6)) : y > bottom ? Math.min(20, Math.ceil((y - bottom) / 6)) : 0;
+  if (speed) { scrollBy(0, speed); layoutDrag(); }
+  drag.raf = requestAnimationFrame(autoScroll);
+}
+
+function dragEnd() {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  cancelAnimationFrame(d.raf);
+  removeEventListener("pointermove", dragMove);
+  removeEventListener("pointerup", dragEnd);
+  removeEventListener("pointercancel", dragEnd);
+  document.body.classList.remove("is-dragging");
+  if (d.to !== d.from) {
+    const list = d.kind === "day" ? plan : plan[d.i].exercises;
+    const [moved] = list.splice(d.from, 1);
+    list.splice(d.to, 0, moved);
+    save();
+  }
+  render();
+}
+
+// ---------- Bodyweight ----------
+function addBodyweight() {
+  const date = el("bwDate").value || todayStr();
+  const w = num(el("bwWeight").value);
+  if (!(w > 0)) { toast("Enter your bodyweight first."); el("bwWeight").focus(); return; }
+  const existing = bodyweight.find(b => b.date === date);
+  if (existing) existing.weight = w;
+  else bodyweight.push({ date, weight: w });
+  bodyweight.sort((a, b) => b.date.localeCompare(a.date));
+  el("bwWeight").value = "";
+  save(); renderBody(); renderBackupBanner();
+  toast("Bodyweight saved for " + fmtDay(date) + ".");
+}
+
+function deleteBodyweight(n) {
+  if (!confirm("Delete this bodyweight entry?")) return;
+  bodyweight.splice(n, 1);
+  save(); renderBody();
+}
+
+function renderBody() {
+  const box = el("bodyweight");
+  if (!bodyweight.length) { box.innerHTML = '<p class="muted empty">No entries yet.</p>'; return; }
+  const fmt = n => (Math.round(n * 10) / 10).toString();
+  const change = (a, b) => { const c = a - b; return (c > 0 ? "+" : c < 0 ? "−" : "±") + fmt(Math.abs(c)); };
+  const oldest = bodyweight[bodyweight.length - 1], latest = bodyweight[0];
+  const row = (b, n) => `<li><span>${esc(fmtDay(b.date))}</span><strong>${fmt(b.weight)} lbs</strong>
+      <span class="muted">${bodyweight[n + 1] ? change(b.weight, bodyweight[n + 1].weight) : ""}</span>
+      <button class="mini danger" onclick="deleteBodyweight(${n})" aria-label="Delete entry">&times;</button></li>`;
+  const recent = bodyweight.slice(0, 7).map((b, n) => row(b, n)).join("");
+  const older = bodyweight.slice(7).map((b, n) => row(b, n + 7)).join("");
+  box.innerHTML =
+    (bodyweight.length > 1 ? `<p class="muted">Change since ${esc(fmtDay(oldest.date))}: <strong>${change(latest.weight, oldest.weight)} lbs</strong></p>` : "") +
+    `<ul class="bw-list">${recent}</ul>` +
+    (older ? `<details><summary>Older entries (${bodyweight.length - 7})</summary><ul class="bw-list">${older}</ul></details>` : "");
+}
+
+// ---------- Backup reminder ----------
+function renderBackupBanner() {
+  const now = Date.now();
+  const last = settings.lastBackup ? Date.parse(settings.lastBackup) : null;
+  el("backupInfo").textContent = last ? "Last backup: " + fmtDate(settings.lastBackup) + "." : "Not backed up yet.";
+  const hasData = log.length > 0 || bodyweight.length > 0;
+  const snoozed = settings.snoozeUntil && now < Date.parse(settings.snoozeUntil);
+  const due = !last || now - last > BACKUP_EVERY_DAYS * DAY_MS;
+  const banner = el("backupBanner");
+  if (!hasData || snoozed || !due) { banner.hidden = true; return; }
+  banner.querySelector(".msg").textContent = last
+    ? `It's been ${Math.floor((now - last) / DAY_MS)} days since your last backup. Export a copy so you don't lose your workouts.`
+    : "You haven't backed up yet. Your workouts are only saved in this browser, so export a copy to keep them safe.";
+  banner.hidden = false;
+}
+
+function snoozeBackup() {
+  settings.snoozeUntil = new Date(Date.now() + 3 * DAY_MS).toISOString();
+  save(); renderBackupBanner();
 }
 
 // ---------- Rest timer ----------
@@ -363,8 +888,8 @@ function startTimer(seconds) {
   paused = false;
   timerLeft = seconds;
   endTime = Date.now() + seconds * 1000;
-  document.getElementById("timer").classList.remove("done");
-  document.getElementById("pauseBtn").textContent = "Pause";
+  el("timer").classList.remove("done");
+  el("pauseBtn").textContent = "Pause";
   timerId = setInterval(tick, 250);
   showTime();
 }
@@ -375,7 +900,7 @@ function tick() {
   showTime();
   if (timerLeft <= 0) {
     clearInterval(timerId); timerId = null;
-    document.getElementById("timer").classList.add("done");
+    el("timer").classList.add("done");
     beep();
     if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
   }
@@ -386,19 +911,19 @@ function togglePause() {
   paused = !paused;
   if (paused) pausedMs = endTime - Date.now();      // remember exactly how much was left
   else endTime = Date.now() + pausedMs;             // pick up where it left off
-  document.getElementById("pauseBtn").textContent = paused ? "Resume" : "Pause";
+  el("pauseBtn").textContent = paused ? "Resume" : "Pause";
 }
 
 function resetTimer() {
   clearInterval(timerId); timerId = null; timerLeft = 0; paused = false;
-  document.getElementById("timer").classList.remove("done");
-  document.getElementById("pauseBtn").textContent = "Pause";
+  el("timer").classList.remove("done");
+  el("pauseBtn").textContent = "Pause";
   showTime();
 }
 
 function showTime() {
   const t = Math.max(timerLeft, 0);
-  document.getElementById("timerDisplay").textContent = Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+  el("timerDisplay").textContent = Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
 }
 
 // Phones only allow sound that was started by a tap, so set audio up when a timer button is pressed
@@ -426,13 +951,16 @@ function beep() {
 function saveNow() { save(); }
 
 function exportData() {
-  const data = { version: APP_VERSION, plan, log };
+  const data = { version: APP_VERSION, plan, log, bodyweight };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "workout-plan-" + new Date().toISOString().slice(0, 10) + ".json";
+  a.download = "workout-plan-" + todayStr() + ".json";
   a.click();
   URL.revokeObjectURL(a.href);
+  settings.lastBackup = new Date().toISOString();
+  settings.snoozeUntil = null;
+  save(); renderBackupBanner();
 }
 
 function importData(event) {
@@ -447,11 +975,12 @@ function importData(event) {
       } else if (data && Array.isArray(data.plan)) {
         plan = cleanPlan(data.plan);
         log = cleanLog(data.log);
+        if (Array.isArray(data.bodyweight)) bodyweight = cleanBody(data.bodyweight);
       } else {
         throw new Error();
       }
-      save(); render(); renderLog();
-      setStatus("Imported " + plan.length + " day(s) and " + log.length + " log entries.");
+      save(); renderAll();
+      toast("Imported " + plural(plan.length, "day") + ", " + plural(log.length, "log entry").replace("entrys", "entries") + ".");
     } catch (e) {
       alert("That file is not a valid workout plan.");
     }
@@ -461,122 +990,156 @@ function importData(event) {
 }
 
 function clearAll() {
-  if (!confirm("Delete all days, workouts and the workout log?")) return;
-  plan = []; log = [];
-  save(); render(); renderLog();
+  if (!confirm("Delete all days, workouts, the workout log and bodyweight entries?")) return;
+  plan = []; log = []; bodyweight = [];
+  save(); renderAll();
 }
 
 // ---------- Render ----------
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function options(values, current) {
+  const list = values.map(String);
+  if (current !== "" && current != null && !list.includes(String(current))) list.push(String(current));
+  return list.map(v => `<option${v === String(current) ? " selected" : ""}>${esc(v)}</option>`).join("");
 }
-
-function exerciseOptions() {
-  let html = '<option value="">+ Add exercise (by body part)...</option>';
-  for (const cat in LIBRARY) {
-    html += '<optgroup label="' + esc(cat) + '">';
-    LIBRARY[cat].forEach(n => html += '<option>' + esc(n) + '</option>');
-    html += '</optgroup>';
-  }
-  return html;
-}
+function range(a, b) { const out = []; for (let n = a; n <= b; n++) out.push(n); return out; }
 
 function render() {
-  const container = document.getElementById("days");
-  if (plan.length === 0) {
-    container.innerHTML = '<div class="section"><p class="muted empty">No days yet. Add one above to get started.</p></div>';
-    document.getElementById("foldBar").style.display = "none";
+  const box = el("days");
+  el("foldBar").style.display = plan.length > 1 ? "" : "none";
+  if (!plan.length) {
+    box.innerHTML = '<div class="section"><p class="muted empty">No days yet. Add one above to get started.</p></div>';
     return;
   }
-  document.getElementById("foldBar").style.display = plan.length > 1 ? "" : "none";
-  const options = exerciseOptions();
-  container.innerHTML = plan.map((day, i) => {
-    const exercises = day.exercises.map((ex, k) => `
-      <div class="exercise${flashExercise && flashExercise[0] === i && flashExercise[1] === k ? " new" : ""}">
-        <div class="exercise-top">
-          <div><strong>${esc(ex.name)}</strong><br><span class="tag">${esc(ex.category)}</span></div>
-          <div class="actions">
-            <button onclick="moveExercise(${i},${k},-1)" aria-label="Move up">&uarr;</button>
-            <button onclick="moveExercise(${i},${k},1)" aria-label="Move down">&darr;</button>
-            <button class="danger" onclick="deleteExercise(${i},${k})" aria-label="Delete">&times;</button>
-          </div>
-        </div>
-        <div class="fields">
-          <label>Sets<input type="number" inputmode="numeric" min="0" value="${esc(ex.sets)}" oninput="updateField(${i},${k},'sets',this.value)"></label>
-          <label>Reps<input type="number" inputmode="numeric" min="0" value="${esc(ex.reps)}" oninput="updateField(${i},${k},'reps',this.value)"></label>
-          <label>Weight<input inputmode="decimal" value="${esc(ex.weight)}" placeholder="lbs" oninput="updateField(${i},${k},'weight',this.value)"></label>
-          <label class="notes">Notes<input value="${esc(ex.notes)}" oninput="updateField(${i},${k},'notes',this.value)"></label>
-        </div>
-      </div>`).join("");
+  box.innerHTML = plan.map(renderDay).join("");
+  flashId = null;
+}
 
-    const count = day.exercises.length + (day.exercises.length === 1 ? " exercise" : " exercises");
+function renderDay(day, i) {
+  const done = doneCount(day);
+  const progress = done ? ` <span class="tag">&middot; ${plural(done, "set")} done</span>` : "";
+  const head = `
+      <div class="day-head">
+        <button class="handle" onpointerdown="dragStart(event,'day',${i})" aria-label="Drag to reorder ${esc(day.name)}" title="Drag to reorder">&#8801;</button>
+        <button class="day-title" onclick="toggleDay(${i})" aria-expanded="${!day.collapsed}">
+          <span class="arrow">&#9662;</span><h2>${esc(day.name)}</h2><span class="muted">${plural(day.exercises.length, "exercise")}</span>
+        </button>
+      </div>`;
+
+  if (day.collapsed) {
     const summary = day.exercises.map(e => esc(e.name)).join(", ");
-
-    if (day.collapsed) {
-      return `
-    <div class="section day collapsed">
-      <button class="day-title" onclick="toggleDay(${i})" aria-expanded="false">
-        <span class="arrow">&#9662;</span><h2>${esc(day.name)}</h2><span class="muted">${count}</span>
-      </button>
-      ${summary ? `<p class="muted day-summary">${summary}</p>` : ""}
-    </div>`;
-    }
-
     return `
-    <div class="section day">
-      <button class="day-title" onclick="toggleDay(${i})" aria-expanded="true">
-        <span class="arrow">&#9662;</span><h2>${esc(day.name)}</h2><span class="muted">${count}</span>
-      </button>
+    <div class="section day collapsed" data-day="${i}">${head}
+      ${summary || progress ? `<p class="muted day-summary">${summary}${progress}</p>` : ""}
+    </div>`;
+  }
+
+  return `
+    <div class="section day" data-day="${i}">${head}
       <div class="day-buttons">
-        <button class="icon" onclick="moveDay(${i},-1)" aria-label="Move day up">&uarr;</button>
-        <button class="icon" onclick="moveDay(${i},1)" aria-label="Move day down">&darr;</button>
         <button onclick="renameDay(${i})">Rename</button>
         <button onclick="duplicateDay(${i})">Copy</button>
         <button class="danger" onclick="deleteDay(${i})">Delete Day</button>
       </div>
-      ${exercises || '<p class="muted empty">No exercises yet. Pick one from the list below.</p>'}
-      <div class="add-row pick-row">
-        <select id="pick-${i}" onchange="addFromPicker(${i}, this)">${options}</select>
-      </div>
+      <div class="ex-list">${day.exercises.map((ex, k) => renderExercise(day, i, ex, k)).join("")}</div>
+      ${day.exercises.length ? "" : '<p class="muted empty">No exercises yet. Tap "+ Add exercise".</p>'}
       <div class="add-row">
-        <button class="primary full" onclick="logWorkout(${i})">Log Workout (done today)</button>
+        <button class="full" onclick="openLibrary('add', ${i})">+ Add exercise</button>
+        ${day.exercises.length ? `<button class="primary full" onclick="finishWorkout(${i})">Finish workout &amp; save to log${progress ? " (" + plural(done, "set") + ")" : ""}</button>` : ""}
+        ${day.session ? `<button class="danger full" onclick="discardSession(${i})">Clear today's sets</button>` : ""}
       </div>
     </div>`;
+}
+
+function renderExercise(day, i, ex, k) {
+  const id = ex.id;
+  const rows = rowsFor(day, ex);
+  const prs = sessionPRs(ex.name, rows);
+  const done = rows.filter(s => s.done).length;
+  const last = lastSession(ex.name);
+  const hint = overloadHint(ex, last);
+  const isOpen = openExercises.has(id);
+  const reps = ex.repMin === ex.repMax ? ex.repMin : ex.repMin + "–" + ex.repMax;
+  const target = `${ex.sets} × ${reps}${ex.rir ? " · " + esc(ex.rir) : ""}`;
+
+  const header = `
+      <div class="ex-head">
+        <button class="handle" onpointerdown="dragStart(event,'ex',${i},${k})" aria-label="Drag to reorder ${esc(ex.name)}" title="Drag to reorder">&#8801;</button>
+        <button class="ex-title" onclick="toggleExercise('${id}')" aria-expanded="${isOpen}">
+          <span class="line1"><strong>${esc(ex.name)}</strong><span class="muted">${done ? done + "/" + rows.length + " sets" : target}</span></span>
+          <span class="tag">${esc(ex.category)}${prs.some(Boolean) ? ' &nbsp;<span class="pr">PR</span>' : ""}</span>
+          <span class="muted">${last ? "Last: " + esc(formatSets(last.sets)) : "No history yet"}${hint ? ' &middot; <span class="tag">&#8593; add weight</span>' : ""}</span>
+        </button>
+      </div>`;
+  if (!isOpen) return `<div class="exercise${flashId === id ? " new" : ""}">${header}</div>`;
+
+  const setRows = rows.map((s, n) => {
+    const sug = suggestion(ex, n, last);
+    return `
+        <div class="set-row${s.done ? " done" : ""}">
+          <span class="set-n">${n + 1}</span>
+          <input inputmode="decimal" aria-label="Set ${n + 1} weight" placeholder="${esc(sug.weight || "lbs")}" value="${esc(s.weight)}"
+                 oninput="updateSet(${i},'${id}',${n},'weight',this.value)">
+          <span class="x">&times;</span>
+          <input inputmode="numeric" aria-label="Set ${n + 1} reps" placeholder="${esc(sug.reps || "reps")}" value="${esc(s.reps)}"
+                 oninput="updateSet(${i},'${id}',${n},'reps',this.value)">
+          <button class="tick${s.done ? " on" : ""}" onclick="toggleDone(${i},'${id}',${n})" aria-pressed="${s.done}" aria-label="Set ${n + 1} done">&#10003;</button>
+          ${prs[n] ? '<span class="pr">PR</span>' : ""}
+          ${n >= ex.sets ? `<button class="mini danger" onclick="removeSetRow(${i},'${id}',${n})" aria-label="Remove set ${n + 1}">&times;</button>` : ""}
+        </div>`;
   }).join("");
 
-  flashExercise = null;
-  if (focusAfterRender) {
-    const el = document.getElementById(focusAfterRender);
-    focusAfterRender = null;
-    if (el) el.focus({ preventScroll: true });
-  }
+  return `
+    <div class="exercise open${flashId === id ? " new" : ""}">${header}
+      <div class="ex-body">
+        ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}
+        <div class="muted">Weight &times; reps &mdash; tick &#10003; when a set is done. An empty set fills in last time's numbers.</div>
+        ${setRows}
+        <button class="mini" onclick="addSetRow(${i},'${id}')">+ Set</button>
+        <div class="plan-fields">
+          <label>Target sets<select onchange="updatePlan(${i},'${id}','sets',this.value)">${options(range(1, 10), ex.sets)}</select></label>
+          <label>Reps from<select onchange="updatePlan(${i},'${id}','repMin',this.value)">${options(range(1, 50), ex.repMin)}</select></label>
+          <label>Reps to<select onchange="updatePlan(${i},'${id}','repMax',this.value)">${options(range(1, 50), ex.repMax)}</select></label>
+          <label>Effort<select onchange="updatePlan(${i},'${id}','rir',this.value)"><option value="">&mdash;</option>${options(EFFORT_OPTIONS, ex.rir)}</select></label>
+          <label class="notes">Notes<input value="${esc(ex.notes)}" oninput="updateNotes(${i},'${id}',this.value)"></label>
+        </div>
+        <div class="row-buttons">
+          <button onclick="openLibrary('swap', ${i}, '${id}')">Swap exercise</button>
+          <button class="danger" onclick="deleteExercise(${i},'${id}')">Remove</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderLog() {
-  const container = document.getElementById("log");
-  if (log.length === 0) {
-    container.innerHTML = '<p class="muted empty">Nothing logged yet.</p>';
-    return;
-  }
-  container.innerHTML = log.map((entry, n) => {
-    const date = new Date(entry.date).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+  const box = el("log");
+  if (!log.length) { box.innerHTML = '<p class="muted empty">Nothing logged yet.</p>'; return; }
+  box.innerHTML = log.map((entry, n) => {
+    const prCount = entry.exercises.reduce((c, e) => c + e.sets.filter(s => s.pr).length, 0);
     const items = entry.exercises.map(e =>
-      `<li>${esc(e.name)}: ${esc(e.sets)} x ${esc(e.reps)}${e.weight ? " @ " + esc(e.weight) : ""}${e.notes ? " (" + esc(e.notes) + ")" : ""}</li>`
+      `<li>${esc(e.name)}: ${esc(formatSets(e.sets)) || "no sets"}${e.sets.some(s => s.pr) ? ' <span class="pr">PR</span>' : ""}${e.notes ? ' <span class="muted">(' + esc(e.notes) + ")</span>" : ""}</li>`
     ).join("");
     return `
       <details>
-        <summary>${esc(entry.day)} <span class="muted">&middot; ${esc(date)}</span></summary>
+        <summary>${esc(entry.day)} <span class="muted">&middot; ${esc(fmtDate(entry.date))}</span>${prCount ? ' <span class="pr">' + plural(prCount, "PR") + "</span>" : ""}</summary>
         <ul>${items}</ul>
         <button class="danger" onclick="deleteLogEntry(${n})">Delete Entry</button>
       </details>`;
   }).join("");
 }
 
-document.getElementById("newDayName").addEventListener("keydown", e => { if (e.key === "Enter") addDay(); });
+function renderAll() { render(); renderLog(); renderBody(); renderBackupBanner(); }
+
+// ---------- Start up ----------
+el("newDayName").addEventListener("keydown", e => { if (e.key === "Enter") addDay(); });
+el("libList").addEventListener("click", e => {
+  const item = e.target.closest(".lib-item");
+  if (item) pickFromLibrary(item.dataset.name);
+});
+addEventListener("keydown", e => { if (e.key === "Escape" && !el("sheet").hidden) closeLibrary(); });
+el("bwDate").value = todayStr();
 setTheme(document.documentElement.getAttribute("data-theme"));
-document.getElementById("version").textContent = "Workout Creator - Version " + APP_VERSION;
-render();
-renderLog();
+el("version").textContent = "Workout Creator - Version " + APP_VERSION;
+renderAll();
 </script>
 </body>
 </html>
