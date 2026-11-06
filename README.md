@@ -1,9 +1,17 @@
 # Workout Creator
 
-A basic, single-file workout planner. Open `index.html` in any browser — no install needed.
+A basic, single-file workout planner. Open `index.html` in any browser (desktop or phone). There's nothing to install.
 
 - Add, rename, copy, reorder and delete days
 - Add exercises from a library grouped by Push / Pull / Legs / Core and body part, or type your own
 - Track sets, reps, weight and notes per exercise
 - "Quick fill" a day with a Push, Pull or Legs template
-- Saves automatically in your browser; Export/Import to a `.json` file for backups or moving between devices
+- **Workout Log**: press "Log Workout" on a day to save today's date with the sets, reps and weights
+- **Rest timer** pinned to the bottom of the screen (30s / 60s / 90s / 2m), with a beep and a vibration on phones
+- Phone-friendly layout with large buttons
+- Saves automatically in your browser. Export/Import a `.json` file (plan + log) for backups or to move between devices
+
+## Versioning
+
+The version is shown at the bottom of the page and set by `APP_VERSION` in `index.html`.
+It starts at 1.1 and goes up by 0.1 with each update (1.1, 1.2, 1.3, ...).
