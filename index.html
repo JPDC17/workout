@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workout Creator</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
+  h1 { margin-bottom: 4px; }
+  .day { border: 1px solid #999; padding: 10px; margin: 12px 0; }
+  .day-header { display: flex; justify-content: space-between; align-items: center; }
+  .day-header h2 { margin: 0; font-size: 1.2em; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+  td input { width: 60px; }
+  .add-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .muted { color: #666; font-size: 0.9em; }
+  .tag { color: #666; font-size: 0.85em; }
+</style>
+</head>
+<body>
+
+<h1>Workout Creator</h1>
+<p class="muted" id="status">Changes save automatically in this browser.</p>
+
+<div class="bar">
+  <input id="newDayName" placeholder="Day name (e.g. Monday - Push)">
+  <button onclick="addDay()">Add Day</button>
+</div>
+
+<div class="bar">
+  <button onclick="saveNow()">Save</button>
+  <button onclick="exportPlan()">Export to File</button>
+  <label>Import from File <input type="file" id="importFile" accept=".json" onchange="importPlan(event)"></label>
+  <button onclick="clearAll()">Clear All</button>
+</div>
+
+<div id="days"></div>
+
+<script>
+// ---------- Exercise library, grouped by Push / Pull / Legs / Core and body part ----------
+const LIBRARY = {
+  "Push - Chest": ["Bench Press", "Incline Bench Press", "Dumbbell Press", "Incline Dumbbell Press", "Chest Fly", "Cable Crossover", "Push-Ups", "Dips (Chest)"],
+  "Push - Shoulders": ["Overhead Press", "Dumbbell Shoulder Press", "Arnold Press", "Lateral Raise", "Front Raise", "Upright Row"],
+  "Push - Triceps": ["Tricep Pushdown", "Skull Crushers", "Overhead Tricep Extension", "Close-Grip Bench Press", "Dips (Triceps)", "Kickbacks"],
+  "Pull - Back": ["Deadlift", "Pull-Ups", "Chin-Ups", "Lat Pulldown", "Barbell Row", "Dumbbell Row", "Seated Cable Row", "T-Bar Row"],
+  "Pull - Rear Delts / Traps": ["Face Pulls", "Reverse Fly", "Shrugs"],
+  "Pull - Biceps": ["Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Cable Curl", "Concentration Curl"],
+  "Legs - Quads": ["Squat", "Front Squat", "Leg Press", "Lunges", "Bulgarian Split Squat", "Leg Extension"],
+  "Legs - Hamstrings / Glutes": ["Romanian Deadlift", "Leg Curl", "Hip Thrust", "Glute Bridge", "Good Mornings"],
+  "Legs - Calves": ["Standing Calf Raise", "Seated Calf Raise"],
+  "Core": ["Plank", "Crunches", "Hanging Leg Raise", "Russian Twist", "Cable Crunch", "Ab Wheel"]
+};
+
+// Quick templates for a full day
+const TEMPLATES = {
+  "Push": ["Bench Press", "Overhead Press", "Incline Dumbbell Press", "Lateral Raise", "Tricep Pushdown"],
+  "Pull": ["Deadlift", "Pull-Ups", "Barbell Row", "Face Pulls", "Barbell Curl"],
+  "Legs": ["Squat", "Romanian Deadlift", "Leg Press", "Leg Curl", "Standing Calf Raise"]
+};
+
+const STORAGE_KEY = "workoutPlan";
+let plan = load();
+
+function load() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (Array.isArray(data)) return data;
+  } catch (e) {}
+  return [];
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
+    setStatus("Saved " + new Date().toLocaleTimeString());
+  } catch (e) {
+    setStatus("Could not save in this browser. Use Export to File.");
+  }
+}
+
+function setStatus(msg) { document.getElementById("status").textContent = msg; }
+
+function categoryOf(name) {
+  for (const cat in LIBRARY) if (LIBRARY[cat].includes(name)) return cat;
+  return "Custom";
+}
+
+function newExercise(name) {
+  return { name, category: categoryOf(name), sets: 3, reps: 10, weight: "", notes: "" };
+}
+
+// ---------- Days ----------
+function addDay() {
+  const input = document.getElementById("newDayName");
+  const name = input.value.trim() || "Day " + (plan.length + 1);
+  plan.push({ name, exercises: [] });
+  input.value = "";
+  save(); render();
+}
+
+function deleteDay(i) {
+  if (!confirm("Delete " + plan[i].name + "?")) return;
+  plan.splice(i, 1);
+  save(); render();
+}
+
+function renameDay(i) {
+  const name = prompt("New name for this day:", plan[i].name);
+  if (name && name.trim()) { plan[i].name = name.trim(); save(); render(); }
+}
+
+function moveDay(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= plan.length) return;
+  [plan[i], plan[j]] = [plan[j], plan[i]];
+  save(); render();
+}
+
+function duplicateDay(i) {
+  const copy = JSON.parse(JSON.stringify(plan[i]));
+  copy.name += " (copy)";
+  plan.splice(i + 1, 0, copy);
+  save(); render();
+}
+
+function applyTemplate(i, key) {
+  if (!key) return;
+  TEMPLATES[key].forEach(n => plan[i].exercises.push(newExercise(n)));
+  save(); render();
+}
+
+// ---------- Exercises ----------
+function addExercise(i) {
+  const select = document.getElementById("pick-" + i);
+  const custom = document.getElementById("custom-" + i).value.trim();
+  const name = custom || select.value;
+  if (!name) return;
+  plan[i].exercises.push(newExercise(name));
+  save(); render();
+}
+
+function deleteExercise(i, k) {
+  plan[i].exercises.splice(k, 1);
+  save(); render();
+}
+
+function moveExercise(i, k, dir) {
+  const list = plan[i].exercises, j = k + dir;
+  if (j < 0 || j >= list.length) return;
+  [list[k], list[j]] = [list[j], list[k]];
+  save(); render();
+}
+
+function updateField(i, k, field, value) {
+  plan[i].exercises[k][field] = value;
+  save(); // no re-render so typing isn't interrupted
+}
+
+// ---------- Save / load files ----------
+function saveNow() { save(); }
+
+function exportPlan() {
+  const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "workout-plan.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importPlan(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!Array.isArray(data)) throw new Error();
+      plan = data;
+      save(); render();
+    } catch (e) {
+      alert("That file is not a valid workout plan.");
+    }
+    event.target.value = "";
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if (!confirm("Delete all days and workouts?")) return;
+  plan = [];
+  save(); render();
+}
+
+// ---------- Render ----------
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function exerciseOptions() {
+  let html = '<option value="">-- choose exercise --</option>';
+  for (const cat in LIBRARY) {
+    html += '<optgroup label="' + esc(cat) + '">';
+    LIBRARY[cat].forEach(n => html += '<option>' + esc(n) + '</option>');
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+function render() {
+  const container = document.getElementById("days");
+  if (plan.length === 0) {
+    container.innerHTML = '<p class="muted">No days yet. Add one above.</p>';
+    return;
+  }
+  const options = exerciseOptions();
+  container.innerHTML = plan.map((day, i) => {
+    const rows = day.exercises.map((ex, k) => `
+      <tr>
+        <td>${esc(ex.name)}<br><span class="tag">${esc(ex.category)}</span></td>
+        <td><input type="number" min="0" value="${esc(ex.sets)}" oninput="updateField(${i},${k},'sets',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(ex.reps)}" oninput="updateField(${i},${k},'reps',this.value)"></td>
+        <td><input value="${esc(ex.weight)}" placeholder="lbs" oninput="updateField(${i},${k},'weight',this.value)"></td>
+        <td><input style="width:120px" value="${esc(ex.notes || "")}" oninput="updateField(${i},${k},'notes',this.value)"></td>
+        <td>
+          <button onclick="moveExercise(${i},${k},-1)">&uarr;</button>
+          <button onclick="moveExercise(${i},${k},1)">&darr;</button>
+          <button onclick="deleteExercise(${i},${k})">Delete</button>
+        </td>
+      </tr>`).join("");
+
+    return `
+    <div class="day">
+      <div class="day-header">
+        <h2>${esc(day.name)} <span class="tag">(${day.exercises.length} exercises)</span></h2>
+        <div>
+          <button onclick="moveDay(${i},-1)">&uarr;</button>
+          <button onclick="moveDay(${i},1)">&darr;</button>
+          <button onclick="renameDay(${i})">Rename</button>
+          <button onclick="duplicateDay(${i})">Copy</button>
+          <button onclick="deleteDay(${i})">Delete Day</button>
+        </div>
+      </div>
+      ${day.exercises.length ? `
+      <table>
+        <tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Weight</th><th>Notes</th><th></th></tr>
+        ${rows}
+      </table>` : '<p class="muted">No exercises yet.</p>'}
+      <div class="add-row">
+        <select id="pick-${i}">${options}</select>
+        <input id="custom-${i}" placeholder="or type a custom exercise">
+        <button onclick="addExercise(${i})">Add Exercise</button>
+        <select onchange="applyTemplate(${i}, this.value)">
+          <option value="">Quick fill...</option>
+          <option>Push</option><option>Pull</option><option>Legs</option>
+        </select>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+document.getElementById("newDayName").addEventListener("keydown", e => { if (e.key === "Enter") addDay(); });
+render();
+</script>
+</body>
+</html>
