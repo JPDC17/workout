@@ -59,10 +59,16 @@
   .bar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
   .bar > input { flex: 1 1 200px; }
   .section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 14px 0; }
-  .day-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
-  .day-buttons { display: flex; flex-wrap: wrap; gap: 4px; }
-  .count { color: var(--muted); font-size: 0.8em; font-weight: normal; }
-  .count::before { content: "("; } .count::after { content: " exercises)"; }
+  .day-title {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+    background: none; border: none; padding: 4px 0; min-height: 40px; color: var(--text);
+  }
+  .day-title:hover { border: none; }
+  .day-title h2 { flex: 1; }
+  .day-title .arrow { color: var(--accent); width: 1em; display: inline-block; transition: transform 0.15s; }
+  .day.collapsed .day-title .arrow { transform: rotate(-90deg); }
+  .day-summary { margin: 2px 0 0 24px; }
+  .day-buttons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
   .exercise { border-top: 1px solid var(--border); padding: 10px 0; }
   .exercise-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
   .exercise-top .actions { display: flex; gap: 4px; }
@@ -73,6 +79,12 @@
   .fields .notes { grid-column: 1 / -1; }
   .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .add-row select, .add-row input { flex: 1 1 180px; }
+  .add-row.search-row { flex-wrap: nowrap; }
+  .add-row .search { flex: 1 1 auto; min-width: 0; }
+  .add-row .search + button { flex: 0 0 auto; }
+  .add-row.pick-row select { flex: 1 1 140px; min-width: 0; }
+  .exercise.new { animation: flash 1s ease-out; }
+  @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
   .add-row .full { flex: 1 1 100%; }
   .muted { color: var(--muted); font-size: 0.9em; }
   .tag { font-size: 0.8em; color: var(--accent); }
@@ -94,7 +106,6 @@
   footer { margin-top: 30px; text-align: center; }
   @media (max-width: 500px) {
     h1 { font-size: 1.35em; }
-    .day-buttons { width: 100%; }
     .day-buttons button { flex: 1 1 auto; }
     #timer button { padding: 6px 8px; }
   }
@@ -111,6 +122,10 @@
 <div class="bar">
   <input id="newDayName" placeholder="Day name (e.g. Monday - Push)">
   <button class="primary" onclick="addDay()">+ Add Day</button>
+</div>
+<div class="bar" id="foldBar">
+  <button onclick="setAllCollapsed(true)">Collapse all</button>
+  <button onclick="setAllCollapsed(false)">Expand all</button>
 </div>
 
 <div id="days"></div>
@@ -148,7 +163,7 @@
 </div>
 
 <script>
-const APP_VERSION = "1.4";
+const APP_VERSION = "1.5";
 
 // ---------- Dark mode ----------
 function setTheme(t) {
@@ -212,6 +227,7 @@ function cleanPlan(data) {
   if (!Array.isArray(data)) return [];
   return data.filter(d => d && typeof d === "object").map((d, i) => ({
     name: d.name ? String(d.name) : "Day " + (i + 1),
+    collapsed: !!d.collapsed,
     exercises: (Array.isArray(d.exercises) ? d.exercises : []).map(cleanExercise).filter(Boolean)
   }));
 }
@@ -250,7 +266,7 @@ function newExercise(name) {
 function addDay() {
   const input = document.getElementById("newDayName");
   const name = input.value.trim() || "Day " + (plan.length + 1);
-  plan.push({ name, exercises: [] });
+  plan.push({ name, collapsed: false, exercises: [] });
   input.value = "";
   save(); render();
 }
@@ -276,6 +292,7 @@ function moveDay(i, dir) {
 function duplicateDay(i) {
   const copy = JSON.parse(JSON.stringify(plan[i]));
   copy.name += " (copy)";
+  copy.collapsed = false;
   plan.splice(i + 1, 0, copy);
   save(); render();
 }
@@ -283,17 +300,56 @@ function duplicateDay(i) {
 function applyTemplate(i, key) {
   if (!key) return;
   TEMPLATES[key].forEach(n => plan[i].exercises.push(newExercise(n)));
+  plan[i].collapsed = false;
+  save(); render();
+  setStatus("Added the " + key + " exercises to " + plan[i].name + ".");
+}
+
+// ---------- Minimize days ----------
+function toggleDay(i) {
+  plan[i].collapsed = !plan[i].collapsed;
+  save(); render();
+}
+
+function setAllCollapsed(value) {
+  plan.forEach(d => d.collapsed = value);
   save(); render();
 }
 
 // ---------- Exercises ----------
-function addExercise(i) {
-  const select = document.getElementById("pick-" + i);
-  const custom = document.getElementById("custom-" + i).value.trim();
-  const name = custom || select.value;
-  if (!name) return;
+// Find a library exercise by name, ignoring upper/lower case
+function findExercise(text) {
+  const t = text.trim().toLowerCase();
+  for (const cat in LIBRARY) {
+    const hit = LIBRARY[cat].find(n => n.toLowerCase() === t);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+let focusAfterRender = null, flashExercise = null;
+
+// Add from the search box: a library name, or anything else as a custom exercise
+function addFromSearch(i) {
+  const input = document.getElementById("search-" + i);
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  pushExercise(i, findExercise(text) || text, "search-" + i);
+}
+
+// Add straight away when something is picked from the body-part list
+function addFromPicker(i, select) {
+  if (!select.value) return;
+  pushExercise(i, select.value, "pick-" + i);
+}
+
+function pushExercise(i, name, focusId) {
   plan[i].exercises.push(newExercise(name));
+  plan[i].collapsed = false;
+  flashExercise = [i, plan[i].exercises.length - 1];
+  focusAfterRender = focusId;
   save(); render();
+  setStatus("Added " + name + " to " + plan[i].name + ".");
 }
 
 function deleteExercise(i, k) {
@@ -450,8 +506,20 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// One shared list of suggestions for every search box
+function buildDatalist() {
+  const list = document.createElement("datalist");
+  list.id = "exerciseList";
+  for (const cat in LIBRARY) LIBRARY[cat].forEach(n => {
+    const o = document.createElement("option");
+    o.value = n; o.label = cat;
+    list.appendChild(o);
+  });
+  document.body.appendChild(list);
+}
+
 function exerciseOptions() {
-  let html = '<option value="">-- choose exercise --</option>';
+  let html = '<option value="">By body part...</option>';
   for (const cat in LIBRARY) {
     html += '<optgroup label="' + esc(cat) + '">';
     LIBRARY[cat].forEach(n => html += '<option>' + esc(n) + '</option>');
@@ -464,12 +532,14 @@ function render() {
   const container = document.getElementById("days");
   if (plan.length === 0) {
     container.innerHTML = '<div class="section"><p class="muted empty">No days yet. Add one above to get started.</p></div>';
+    document.getElementById("foldBar").style.display = "none";
     return;
   }
+  document.getElementById("foldBar").style.display = plan.length > 1 ? "" : "none";
   const options = exerciseOptions();
   container.innerHTML = plan.map((day, i) => {
     const exercises = day.exercises.map((ex, k) => `
-      <div class="exercise">
+      <div class="exercise${flashExercise && flashExercise[0] === i && flashExercise[1] === k ? " new" : ""}">
         <div class="exercise-top">
           <div><strong>${esc(ex.name)}</strong><br><span class="tag">${esc(ex.category)}</span></div>
           <div class="actions">
@@ -486,23 +556,39 @@ function render() {
         </div>
       </div>`).join("");
 
+    const count = day.exercises.length + (day.exercises.length === 1 ? " exercise" : " exercises");
+    const summary = day.exercises.map(e => esc(e.name)).join(", ");
+
+    if (day.collapsed) {
+      return `
+    <div class="section day collapsed">
+      <button class="day-title" onclick="toggleDay(${i})" aria-expanded="false">
+        <span class="arrow">&#9662;</span><h2>${esc(day.name)}</h2><span class="muted">${count}</span>
+      </button>
+      ${summary ? `<p class="muted day-summary">${summary}</p>` : ""}
+    </div>`;
+    }
+
     return `
     <div class="section day">
-      <div class="day-header">
-        <h2>${esc(day.name)} <span class="count">${day.exercises.length}</span></h2>
-        <div class="day-buttons">
-          <button class="icon" onclick="moveDay(${i},-1)" aria-label="Move day up">&uarr;</button>
-          <button class="icon" onclick="moveDay(${i},1)" aria-label="Move day down">&darr;</button>
-          <button onclick="renameDay(${i})">Rename</button>
-          <button onclick="duplicateDay(${i})">Copy</button>
-          <button class="danger" onclick="deleteDay(${i})">Delete Day</button>
-        </div>
+      <button class="day-title" onclick="toggleDay(${i})" aria-expanded="true">
+        <span class="arrow">&#9662;</span><h2>${esc(day.name)}</h2><span class="muted">${count}</span>
+      </button>
+      <div class="day-buttons">
+        <button class="icon" onclick="moveDay(${i},-1)" aria-label="Move day up">&uarr;</button>
+        <button class="icon" onclick="moveDay(${i},1)" aria-label="Move day down">&darr;</button>
+        <button onclick="renameDay(${i})">Rename</button>
+        <button onclick="duplicateDay(${i})">Copy</button>
+        <button class="danger" onclick="deleteDay(${i})">Delete Day</button>
       </div>
-      ${exercises || '<p class="muted empty">No exercises yet. Pick one below or use Quick fill.</p>'}
-      <div class="add-row">
-        <select id="pick-${i}">${options}</select>
-        <input id="custom-${i}" placeholder="or type a custom exercise">
-        <button class="primary" onclick="addExercise(${i})">+ Add</button>
+      ${exercises || '<p class="muted empty">No exercises yet. Search below, browse by body part, or use Quick fill.</p>'}
+      <div class="add-row search-row">
+        <input class="search" id="search-${i}" list="exerciseList" placeholder="Type an exercise, then Enter" autocomplete="off"
+               enterkeyhint="done" onkeydown="if (event.key === 'Enter') addFromSearch(${i})">
+        <button class="primary" onclick="addFromSearch(${i})">+ Add</button>
+      </div>
+      <div class="add-row pick-row">
+        <select id="pick-${i}" onchange="addFromPicker(${i}, this)">${options}</select>
         <select onchange="applyTemplate(${i}, this.value)">
           <option value="">Quick fill...</option>
           <option>Push</option><option>Pull</option><option>Legs</option>
@@ -513,6 +599,13 @@ function render() {
       </div>
     </div>`;
   }).join("");
+
+  flashExercise = null;
+  if (focusAfterRender) {
+    const el = document.getElementById(focusAfterRender);
+    focusAfterRender = null;
+    if (el) el.focus({ preventScroll: true });
+  }
 }
 
 function renderLog() {
@@ -537,6 +630,7 @@ function renderLog() {
 
 document.getElementById("newDayName").addEventListener("keydown", e => { if (e.key === "Enter") addDay(); });
 setTheme(document.documentElement.getAttribute("data-theme"));
+buildDatalist();
 document.getElementById("version").textContent = "Workout Creator - Version " + APP_VERSION;
 render();
 renderLog();
