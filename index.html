@@ -4,49 +4,160 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Workout Creator</title>
+<script>
+  // Apply the theme before the page draws, so it doesn't flash
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("workoutTheme"); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
 <style>
+  :root {
+    --bg: #f3f4f8;
+    --card: #ffffff;
+    --text: #1d2130;
+    --muted: #6b7183;
+    --border: #e1e4ec;
+    --input-bg: #f8f9fc;
+    --accent: #4f6bed;
+    --accent-text: #ffffff;
+    --accent-soft: #e8ecfd;
+    --danger: #e0475b;
+    --success: #1f9d6b;
+    --push: #e8590c;
+    --pull: #1c7ed6;
+    --legs: #2f9e44;
+    --core: #ae3ec9;
+    --custom: #868e96;
+    --shadow: 0 1px 3px rgba(20, 25, 40, 0.08), 0 4px 14px rgba(20, 25, 40, 0.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #12141b;
+    --card: #1c1f2a;
+    --text: #e7e9f0;
+    --muted: #9aa0b2;
+    --border: #2c3040;
+    --input-bg: #151821;
+    --accent: #7b93ff;
+    --accent-text: #10131c;
+    --accent-soft: #262d4a;
+    --danger: #ff6b7d;
+    --success: #3ddc97;
+    --push: #ff922b;
+    --pull: #4dabf7;
+    --legs: #69db7c;
+    --core: #da77f2;
+    --custom: #adb5bd;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
   * { box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 16px; max-width: 800px; margin: 0 auto; padding: 12px 12px 110px; }
-  h1 { margin: 8px 0 4px; }
+  html { color-scheme: light; scroll-padding-bottom: 140px; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 16px; line-height: 1.4;
+    background: var(--bg); color: var(--text);
+    max-width: 820px; margin: 0 auto; padding: 16px 14px 130px;
+    transition: background 0.2s, color 0.2s;
+  }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 0 2px; }
+  h1 { margin: 0; font-size: 1.7em; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
   h2 { font-size: 1.2em; margin: 0; }
-  button, select, input { font-size: 16px; min-height: 40px; padding: 6px 10px; }
-  .bar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-  .bar input[type=text], .bar input:not([type]) { flex: 1 1 200px; }
-  .section { border: 1px solid #999; padding: 10px; margin: 12px 0; }
-  .day-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
-  .day-buttons { display: flex; flex-wrap: wrap; gap: 4px; }
-  .exercise { border-top: 1px solid #ccc; padding: 8px 0; }
+  button, select, input { font: inherit; font-size: 16px; min-height: 42px; padding: 8px 12px; border-radius: 10px; }
+  input, select { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  button {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    cursor: pointer; font-weight: 600; transition: transform 0.05s, filter 0.15s, background 0.15s;
+  }
+  button:hover { filter: brightness(0.96); }
+  :root[data-theme="dark"] button:hover { filter: brightness(1.2); }
+  button:active { transform: scale(0.97); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.success { background: var(--success); color: #fff; border-color: var(--success); }
+  :root[data-theme="dark"] button.success { color: #10131c; }
+  button.danger { color: var(--danger); }
+  button.icon { min-width: 42px; padding: 8px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .bar > input { flex: 1 1 200px; }
+  .section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: var(--shadow); padding: 16px; margin: 16px 0;
+  }
+  .day { border-top: 4px solid var(--accent); }
+  .day-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .day-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+  .count { background: var(--accent-soft); color: var(--accent); font-size: 0.75em; font-weight: 700; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }
+  .exercise {
+    border: 1px solid var(--border); border-left: 4px solid var(--custom);
+    border-radius: 12px; padding: 10px 12px; margin-top: 10px; background: var(--input-bg);
+  }
+  .exercise.push { border-left-color: var(--push); }
+  .exercise.pull { border-left-color: var(--pull); }
+  .exercise.legs { border-left-color: var(--legs); }
+  .exercise.core { border-left-color: var(--core); }
   .exercise-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
-  .fields label { font-size: 0.85em; color: #555; }
-  .fields input { width: 100%; }
+  .exercise-top .actions { display: flex; gap: 4px; }
+  .exercise-top .actions button { min-height: 36px; min-width: 36px; padding: 4px; background: transparent; }
+  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .fields label { font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .fields input { width: 100%; margin-top: 2px; background: var(--card); }
   .fields .notes { grid-column: 1 / -1; }
-  .add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .add-row select, .add-row input { flex: 1 1 180px; }
-  .muted { color: #666; font-size: 0.9em; }
-  .tag { color: #666; font-size: 0.85em; }
-  details { border-top: 1px solid #ccc; padding: 6px 0; }
-  summary { cursor: pointer; padding: 4px 0; }
-  details ul { margin: 6px 0; padding-left: 20px; }
-  #timer { position: fixed; left: 0; right: 0; bottom: 0; background: #eee; border-top: 1px solid #999; padding: 8px 12px; }
-  #timer .inner { max-width: 800px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  #timerDisplay { font-size: 1.6em; font-weight: bold; min-width: 70px; }
-  #timer.done { background: #ffd54f; }
+  .add-row .full { flex: 1 1 100%; }
+  .muted { color: var(--muted); font-size: 0.9em; }
+  .tag { display: inline-block; font-size: 0.75em; font-weight: 700; padding: 1px 8px; border-radius: 999px; margin-top: 2px; color: #fff; background: var(--custom); }
+  :root[data-theme="dark"] .tag { color: #10131c; }
+  .tag.push { background: var(--push); }
+  .tag.pull { background: var(--pull); }
+  .tag.legs { background: var(--legs); }
+  .tag.core { background: var(--core); }
+  .empty { text-align: center; padding: 18px; border: 2px dashed var(--border); border-radius: 12px; margin-top: 10px; }
+  details { border: 1px solid var(--border); border-radius: 12px; padding: 4px 12px; margin-top: 8px; background: var(--input-bg); }
+  details[open] { padding-bottom: 12px; }
+  summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
+  summary .muted { font-weight: 400; }
+  details ul { margin: 6px 0 10px; padding-left: 20px; }
+  .file-label {
+    display: inline-flex; align-items: center; min-height: 42px; padding: 8px 12px; border-radius: 10px;
+    background: var(--card); color: var(--text); border: 1px solid var(--border); font-weight: 600; cursor: pointer;
+  }
+  .file-label input { display: none; }
+  #timer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: var(--card); border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.12); padding: 10px 14px;
+    transition: background 0.2s;
+  }
+  #timer .inner { max-width: 820px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  #timer .label { font-weight: 700; color: var(--muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; }
+  #timerDisplay { font-size: 1.8em; font-weight: 800; min-width: 80px; font-variant-numeric: tabular-nums; color: var(--accent); }
+  #timer.done { background: #ffd43b; }
+  #timer.done #timerDisplay, #timer.done .label { color: #1d2130; }
   footer { margin-top: 30px; text-align: center; }
   @media (max-width: 500px) {
+    h1 { font-size: 1.4em; }
+    .day-buttons { width: 100%; }
     .day-buttons button { flex: 1 1 auto; }
-    #timer button { padding: 6px 8px; }
+    #timer button { padding: 6px 9px; }
   }
 </style>
 </head>
 <body>
 
-<h1>Workout Creator</h1>
+<header>
+  <h1>&#127947; Workout <span>Creator</span></h1>
+  <button id="themeBtn" onclick="toggleTheme()">Dark mode</button>
+</header>
 <p class="muted" id="status">Changes save automatically in this browser.</p>
 
 <div class="bar">
   <input id="newDayName" placeholder="Day name (e.g. Monday - Push)">
-  <button onclick="addDay()">Add Day</button>
+  <button class="primary" onclick="addDay()">+ Add Day</button>
 </div>
 
 <div id="days"></div>
@@ -60,10 +171,10 @@
 <div class="section">
   <h2>Save / Backup</h2>
   <div class="bar">
-    <button onclick="saveNow()">Save</button>
+    <button class="primary" onclick="saveNow()">Save</button>
     <button onclick="exportData()">Export to File</button>
-    <label>Import from File <input type="file" accept=".json" onchange="importData(event)"></label>
-    <button onclick="clearAll()">Clear All</button>
+    <label class="file-label">Import from File<input type="file" accept=".json" onchange="importData(event)"></label>
+    <button class="danger" onclick="clearAll()">Clear All</button>
   </div>
 </div>
 
@@ -72,19 +183,30 @@
 <!-- Rest timer, pinned to the bottom of the screen -->
 <div id="timer">
   <div class="inner">
-    <span>Rest:</span>
+    <span class="label">Rest</span>
     <span id="timerDisplay">0:00</span>
     <button onclick="startTimer(30)">30s</button>
     <button onclick="startTimer(60)">60s</button>
     <button onclick="startTimer(90)">90s</button>
     <button onclick="startTimer(120)">2m</button>
-    <button id="pauseBtn" onclick="togglePause()">Pause</button>
+    <button id="pauseBtn" class="primary" onclick="togglePause()">Pause</button>
     <button onclick="resetTimer()">Reset</button>
   </div>
 </div>
 
 <script>
-const APP_VERSION = "1.1";
+const APP_VERSION = "1.2";
+
+// ---------- Dark mode ----------
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("themeBtn").textContent = t === "dark" ? "\u2600\uFE0F Light" : "\uD83C\uDF19 Dark";
+}
+function toggleTheme() {
+  const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  try { localStorage.setItem("workoutTheme", t); } catch (e) {}
+  setTheme(t);
+}
 
 // ---------- Exercise library, grouped by Push / Pull / Legs / Core and body part ----------
 const LIBRARY = {
@@ -135,6 +257,12 @@ function setStatus(msg) { document.getElementById("status").textContent = msg; }
 function categoryOf(name) {
   for (const cat in LIBRARY) if (LIBRARY[cat].includes(name)) return cat;
   return "Custom";
+}
+
+// "Push - Chest" -> "push", used for colors
+function groupClass(category) {
+  const g = String(category || "").split(" ")[0].toLowerCase();
+  return ["push", "pull", "legs", "core"].includes(g) ? g : "custom";
 }
 
 function newExercise(name) {
@@ -343,19 +471,19 @@ function exerciseOptions() {
 function render() {
   const container = document.getElementById("days");
   if (plan.length === 0) {
-    container.innerHTML = '<p class="muted">No days yet. Add one above.</p>';
+    container.innerHTML = '<div class="section"><p class="muted empty">No days yet. Add one above to get started.</p></div>';
     return;
   }
   const options = exerciseOptions();
   container.innerHTML = plan.map((day, i) => {
     const exercises = day.exercises.map((ex, k) => `
-      <div class="exercise">
+      <div class="exercise ${groupClass(ex.category)}">
         <div class="exercise-top">
-          <div><strong>${esc(ex.name)}</strong><br><span class="tag">${esc(ex.category)}</span></div>
-          <div>
+          <div><strong>${esc(ex.name)}</strong><br><span class="tag ${groupClass(ex.category)}">${esc(ex.category)}</span></div>
+          <div class="actions">
             <button onclick="moveExercise(${i},${k},-1)" aria-label="Move up">&uarr;</button>
             <button onclick="moveExercise(${i},${k},1)" aria-label="Move down">&darr;</button>
-            <button onclick="deleteExercise(${i},${k})" aria-label="Delete">&times;</button>
+            <button class="danger" onclick="deleteExercise(${i},${k})" aria-label="Delete">&times;</button>
           </div>
         </div>
         <div class="fields">
@@ -367,29 +495,29 @@ function render() {
       </div>`).join("");
 
     return `
-    <div class="section">
+    <div class="section day">
       <div class="day-header">
-        <h2>${esc(day.name)} <span class="tag">(${day.exercises.length} exercises)</span></h2>
+        <h2>${esc(day.name)} <span class="count">${day.exercises.length}</span></h2>
         <div class="day-buttons">
-          <button onclick="moveDay(${i},-1)" aria-label="Move day up">&uarr;</button>
-          <button onclick="moveDay(${i},1)" aria-label="Move day down">&darr;</button>
+          <button class="icon" onclick="moveDay(${i},-1)" aria-label="Move day up">&uarr;</button>
+          <button class="icon" onclick="moveDay(${i},1)" aria-label="Move day down">&darr;</button>
           <button onclick="renameDay(${i})">Rename</button>
           <button onclick="duplicateDay(${i})">Copy</button>
-          <button onclick="deleteDay(${i})">Delete Day</button>
+          <button class="danger" onclick="deleteDay(${i})">Delete Day</button>
         </div>
       </div>
-      ${exercises || '<p class="muted">No exercises yet.</p>'}
+      ${exercises || '<p class="muted empty">No exercises yet. Pick one below or use Quick fill.</p>'}
       <div class="add-row">
         <select id="pick-${i}">${options}</select>
         <input id="custom-${i}" placeholder="or type a custom exercise">
-        <button onclick="addExercise(${i})">Add Exercise</button>
+        <button class="primary" onclick="addExercise(${i})">+ Add</button>
         <select onchange="applyTemplate(${i}, this.value)">
           <option value="">Quick fill...</option>
           <option>Push</option><option>Pull</option><option>Legs</option>
         </select>
       </div>
       <div class="add-row">
-        <button onclick="logWorkout(${i})">Log Workout (done today)</button>
+        <button class="success full" onclick="logWorkout(${i})">&#10003; Log Workout (done today)</button>
       </div>
     </div>`;
   }).join("");
@@ -398,7 +526,7 @@ function render() {
 function renderLog() {
   const container = document.getElementById("log");
   if (log.length === 0) {
-    container.innerHTML = '<p class="muted">Nothing logged yet.</p>';
+    container.innerHTML = '<p class="muted empty">Nothing logged yet.</p>';
     return;
   }
   container.innerHTML = log.map((entry, n) => {
@@ -408,14 +536,15 @@ function renderLog() {
     ).join("");
     return `
       <details>
-        <summary>${esc(date)} - ${esc(entry.day)}</summary>
+        <summary>${esc(entry.day)} <span class="muted">&middot; ${esc(date)}</span></summary>
         <ul>${items}</ul>
-        <button onclick="deleteLogEntry(${n})">Delete Entry</button>
+        <button class="danger" onclick="deleteLogEntry(${n})">Delete Entry</button>
       </details>`;
   }).join("");
 }
 
 document.getElementById("newDayName").addEventListener("keydown", e => { if (e.key === "Enter") addDay(); });
+setTheme(document.documentElement.getAttribute("data-theme"));
 document.getElementById("version").textContent = "Workout Creator - Version " + APP_VERSION;
 render();
 renderLog();
