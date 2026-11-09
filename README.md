@@ -9,13 +9,15 @@ A single-file workout planner and tracker. Open `index.html` in any browser (des
   Tap to add; filter by group or search (optional)
 - Swap an exercise for an alternative that works the same muscle group
 - Per exercise: target sets, rep range (e.g. 3 × 8–12), and effort (RIR or RPE)
+- Each exercise tracks **weight × reps**, **reps only** (bodyweight moves like hanging leg raises) or **time**
+  (holds and cardio like planks or the treadmill). Library exercises start with a sensible choice; change it under "Tracks"
 
 ## Training
 - Tap an exercise to open it, enter weight × reps for each set and tick ✓ as you go.
   Ticking an empty set fills in last session's numbers
 - "Last: 185 × 8, 8, 7" shows your previous session next to each exercise
 - Progressive overload hint when you hit the top of your rep range on every set
-- Personal records are flagged automatically (best estimated one-rep max, or most reps for bodyweight moves)
+- Personal records are flagged automatically (best estimated one-rep max, most reps for bodyweight moves, longest time for holds)
 - "Finish workout" saves the ticked sets to the **Workout Log**
 - **Rest timer** pinned to the bottom of the screen (30s / 60s / 90s / 2m), with a beep and a vibration on phones
 

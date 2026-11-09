@@ -106,7 +106,9 @@
   .tick { flex: 0 0 44px; padding: 0; font-weight: bold; color: var(--muted); }
   .tick.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
   .mini { min-height: 32px; min-width: 32px; padding: 0 6px; }
-  .plan-fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+  .plan-fields { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 10px; }
+  .plan-fields .w3 { grid-column: span 3; }
+  .plan-fields .w2 { grid-column: span 2; }
   .plan-fields label { font-size: 0.8em; color: var(--muted); }
   .plan-fields select, .plan-fields input { width: 100%; min-width: 0; padding: 6px 4px; }
   .plan-fields .notes { grid-column: 1 / -1; }
@@ -265,7 +267,7 @@
 </div>
 
 <script>
-const APP_VERSION = "1.9";
+const APP_VERSION = "2.0";
 const KEYS = { plan: "workoutPlan", log: "workoutLog", body: "workoutBodyweight", settings: "workoutSettings" };
 const BACKUP_EVERY_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -298,6 +300,17 @@ const LIBRARY = {
   "Cardio / Conditioning": ["Treadmill", "Incline Walk", "Stationary Bike", "Rowing Machine", "Stair Climber", "Elliptical", "Jump Rope", "Burpees", "Sled Push", "Battle Ropes", "Box Jumps"]
 };
 const GROUPS = ["Push", "Pull", "Legs", "Core", "Cardio"];
+// How each exercise is tracked: weight × reps, reps only (bodyweight), or time (holds and cardio).
+// Library exercises start with a sensible type; it can be changed per exercise under "Tracks".
+const TRACK_TYPES = { weight: "Weight \u00d7 reps", reps: "Reps only", time: "Time" };
+const TIME_EXERCISES = ["Plank", "Side Plank", "Hollow Body Hold", "Wall Sit", "Dead Hang", "Copenhagen Plank",
+  "Treadmill", "Incline Walk", "Stationary Bike", "Rowing Machine", "Stair Climber", "Elliptical", "Jump Rope", "Battle Ropes"];
+const REPS_EXERCISES = ["Push-Ups", "Incline Push-Ups", "Decline Push-Ups", "Dips (Chest)", "Pike Push-Ups", "Handstand Push-Ups",
+  "Dips (Triceps)", "Bench Dips", "Diamond Push-Ups", "Pull-Ups", "Chin-Ups", "Neutral-Grip Pull-Ups", "Inverted Row",
+  "Back Extension", "Sissy Squat", "Nordic Curl", "Glute Bridge", "Banded Lateral Walk", "Crunches", "Bicycle Crunch",
+  "Hanging Leg Raise", "Hanging Knee Raise", "Lying Leg Raise", "Russian Twist", "Ab Wheel", "Dead Bug", "Bird Dog",
+  "Mountain Climbers", "V-Ups", "Sit-Ups", "Burpees", "Box Jumps"];
+const TIME_OPTIONS = [10, 15, 20, 30, 40, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 420, 480, 600, 720, 900, 1200, 1500, 1800, 2400, 2700, 3600];
 const EFFORT_OPTIONS = ["RIR 0", "RIR 1", "RIR 2", "RIR 3", "RIR 4", "RPE 6", "RPE 7", "RPE 7.5", "RPE 8", "RPE 8.5", "RPE 9", "RPE 9.5", "RPE 10"];
 
 // ---------- Small helpers ----------
@@ -324,6 +337,27 @@ function categoryOf(name) {
   for (const cat in LIBRARY) if (LIBRARY[cat].includes(name)) return cat;
   return "Custom";
 }
+function isCardio(name) { return categoryOf(name).startsWith("Cardio"); }
+function defaultType(name) { return TIME_EXERCISES.includes(name) ? "time" : REPS_EXERCISES.includes(name) ? "reps" : "weight"; }
+function defaultTime(name) { return isCardio(name) ? [1200, 1800] : [30, 60]; } // seconds
+
+// Seconds from "90", "1:30" etc.
+function parseTime(v) {
+  const s = String(v ?? "").trim();
+  const m = s.match(/^(\d+):(\d{1,2})$/);
+  const n = m ? Number(m[1]) * 60 + Number(m[2]) : num(s);
+  return n > 0 ? Math.round(n) : null;
+}
+// 45 -> "45s", 90 -> "1:30", 1200 -> "20 min"
+function fmtDur(sec) {
+  if (sec < 60) return sec + "s";
+  if (sec >= 600 && sec % 60 === 0) return sec / 60 + " min";
+  return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+}
+function targetText(ex) {
+  const [a, b, f] = ex.type === "time" ? [ex.timeMin, ex.timeMax, fmtDur] : [ex.repMin, ex.repMax, String];
+  return a === b ? f(a) : f(a) + "\u2013" + f(b);
+}
 
 let toastTimer = null;
 function toast(msg) {
@@ -343,23 +377,32 @@ function load(key) {
 }
 
 function cleanSet(s) {
-  return { weight: s && s.weight != null ? String(s.weight) : "", reps: s && s.reps != null ? String(s.reps) : "", done: !!(s && s.done) };
+  const str = v => (v != null ? String(v) : "");
+  return { weight: s ? str(s.weight) : "", reps: s ? str(s.reps) : "", time: s ? str(s.time) : "", done: !!(s && s.done) };
 }
 
 function cleanPlanExercise(e) {
   if (!e || typeof e !== "object" || !e.name) return null;
+  const name = String(e.name);
+  const libCat = categoryOf(name);
   const legacyReps = num(e.reps);                       // versions before 1.7 had one "reps" number
   let repMin = num(e.repMin) ?? legacyReps ?? 8;
   let repMax = num(e.repMax) ?? legacyReps ?? 12;
   if (repMin > repMax) [repMin, repMax] = [repMax, repMin];
+  const [tMin, tMax] = defaultTime(name);
+  let timeMin = num(e.timeMin) ?? tMin, timeMax = num(e.timeMax) ?? tMax;
+  if (timeMin > timeMax) [timeMin, timeMax] = [timeMax, timeMin];
   return {
     id: e.id ? String(e.id) : uid(),
-    name: String(e.name),
+    name,
     // Library exercises always use the library's body part (older versions saved e.g. just "Legs")
-    category: categoryOf(String(e.name)) !== "Custom" ? categoryOf(String(e.name)) : (e.category ? String(e.category) : "Custom"),
-    sets: Math.max(1, Math.min(20, Math.round(num(e.sets) ?? 3))),
+    category: libCat !== "Custom" ? libCat : (e.category ? String(e.category) : "Custom"),
+    type: TRACK_TYPES[e.type] ? e.type : defaultType(name),   // added in 2.0
+    sets: Math.max(1, Math.min(20, Math.round(num(e.sets) ?? (isCardio(name) ? 1 : 3)))),
     repMin: Math.max(1, Math.round(repMin)),
     repMax: Math.max(1, Math.round(repMax)),
+    timeMin: Math.max(1, Math.round(timeMin)),               // seconds
+    timeMax: Math.max(1, Math.round(timeMax)),
     rir: e.rir != null ? String(e.rir) : "",
     weight: e.weight != null ? String(e.weight) : "",   // planned weight, used as a hint when there's no history
     notes: e.notes != null ? String(e.notes) : ""
@@ -386,19 +429,18 @@ function cleanPlan(data) {
 
 function cleanLogExercise(e) {
   if (!e || typeof e !== "object" || !e.name) return null;
+  const str = v => (v != null ? String(v) : "");
   let sets;
   if (Array.isArray(e.sets)) {
-    sets = e.sets.filter(s => s && typeof s === "object").map(s => ({
-      weight: s.weight != null ? String(s.weight) : "", reps: s.reps != null ? String(s.reps) : "", pr: !!s.pr
-    }));
+    sets = e.sets.filter(s => s && typeof s === "object").map(s => ({ weight: str(s.weight), reps: str(s.reps), time: str(s.time), pr: !!s.pr }));
   } else {
     // Logs from versions before 1.7 stored "3 sets of 10 at 135" — turn that into 3 set entries
     const n = Math.max(0, Math.min(20, Math.round(num(e.sets) ?? 0)));
-    sets = Array.from({ length: n }, () => ({
-      weight: e.weight != null ? String(e.weight) : "", reps: e.reps != null ? String(e.reps) : "", pr: false
-    }));
+    sets = Array.from({ length: n }, () => ({ weight: str(e.weight), reps: str(e.reps), time: "", pr: false }));
   }
-  return { name: String(e.name), sets, notes: e.notes ? String(e.notes) : "" };
+  const type = TRACK_TYPES[e.type] ? e.type
+    : sets.some(s => parseTime(s.time)) ? "time" : sets.some(s => num(s.weight) > 0) ? "weight" : "reps";
+  return { name: String(e.name), type, sets, notes: e.notes ? String(e.notes) : "" };
 }
 
 function cleanLog(data) {
@@ -447,17 +489,25 @@ function save() {
 function e1rm(weight, reps) { return weight * (1 + reps / 30); } // estimated one-rep max (Epley)
 
 // Most recent logged session for an exercise
+// A set counts if it has reps or a time
+function hasData(s) { return num(s.reps) > 0 || parseTime(s.time) > 0; }
+
+// Only the parts of a set that matter for this kind of exercise
+function forType(type, s) {
+  return { weight: type === "weight" ? s.weight : "", reps: type === "time" ? "" : s.reps, time: type === "time" ? s.time : "", done: s.done };
+}
+
 function lastSession(name) {
   for (const entry of log) {
-    const ex = entry.exercises.find(e => e.name === name && e.sets.some(s => num(s.reps)));
-    if (ex) return { date: entry.date, sets: ex.sets.filter(s => num(s.reps)) };
+    const ex = entry.exercises.find(e => e.name === name && e.sets.some(hasData));
+    if (ex) return { date: entry.date, sets: ex.sets.filter(hasData) };
   }
   return null;
 }
 
 // Best set ever logged for an exercise
 function bestSoFar(name) {
-  const best = { e1rm: 0, reps: 0, any: false };
+  const best = { e1rm: 0, reps: 0, time: 0, any: false };
   for (const entry of log) for (const ex of entry.exercises) {
     if (ex.name !== name) continue;
     for (const s of ex.sets) addToBest(best, s);
@@ -465,7 +515,8 @@ function bestSoFar(name) {
   return best;
 }
 function addToBest(best, s) {
-  const w = num(s.weight), r = num(s.reps);
+  const t = parseTime(s.time), w = num(s.weight), r = num(s.reps);
+  if (t) { best.any = true; best.time = Math.max(best.time, t); return; }
   if (!r) return;
   best.any = true;
   if (w > 0) best.e1rm = Math.max(best.e1rm, e1rm(w, r));
@@ -477,10 +528,10 @@ function sessionPRs(name, sets) {
   const best = bestSoFar(name);
   if (!best.any) return sets.map(() => false);
   return sets.map(s => {
-    if (!s.done) return false;
-    const w = num(s.weight), r = num(s.reps);
-    if (!r) return false;
-    const pr = w > 0 ? e1rm(w, r) > best.e1rm + 1e-9 : r > best.reps;
+    if (!s.done || !hasData(s)) return false;
+    const t = parseTime(s.time), w = num(s.weight), r = num(s.reps);
+    // Longest time, best estimated 1RM, or most reps without weight
+    const pr = t ? t > best.time : w > 0 ? e1rm(w, r) > best.e1rm + 1e-9 : r > best.reps;
     addToBest(best, s);
     return pr;
   });
@@ -488,28 +539,41 @@ function sessionPRs(name, sets) {
 
 // "185 × 8, 8, 7" when the weight is the same, otherwise "185×8, 175×8"
 function formatSets(sets) {
-  const list = sets.filter(s => num(s.reps));
+  const list = sets.filter(hasData);
   if (!list.length) return "";
+  if (list.some(s => parseTime(s.time))) {
+    return list.map(s => parseTime(s.time) ? fmtDur(parseTime(s.time)) : s.reps + " reps").join(", ");
+  }
   const weights = list.map(s => String(s.weight || "").trim());
   if (weights.every(w => w === weights[0])) {
-    return weights[0] ? weights[0] + " × " + list.map(s => s.reps).join(", ") : list.map(s => s.reps).join(", ") + " reps";
+    return weights[0] ? weights[0] + " \u00d7 " + list.map(s => s.reps).join(", ") : list.map(s => s.reps).join(", ") + " reps";
   }
-  return list.map(s => (s.weight ? s.weight + "×" : "") + s.reps).join(", ");
+  return list.map(s => (s.weight ? s.weight + "\u00d7" : "") + s.reps).join(", ");
 }
 
 // Progressive overload: hit the top of the rep range on every target set last time? Add weight.
 function overloadHint(ex, last) {
-  if (!last || last.sets.length < ex.sets) return "";
-  if (!last.sets.slice(0, ex.sets).every(s => num(s.reps) >= ex.repMax)) return "";
-  return num(last.sets[0].weight) > 0
+  if (!last) return "";
+  if (ex.type === "time") {
+    const times = last.sets.map(s => parseTime(s.time)).filter(Boolean);
+    if (times.length < ex.sets || !times.slice(0, ex.sets).every(t => t >= ex.timeMax)) return "";
+    return `You hit ${fmtDur(ex.timeMax)}+ on every set last time. Go a little longer or try a harder variation.`;
+  }
+  const sets = last.sets.filter(s => num(s.reps));
+  if (sets.length < ex.sets || !sets.slice(0, ex.sets).every(s => num(s.reps) >= ex.repMax)) return "";
+  return ex.type === "weight" && num(sets[0].weight) > 0
     ? `You hit ${ex.repMax}+ reps on every set last time. Add weight today (about +5 lbs).`
-    : `You hit ${ex.repMax}+ reps on every set last time. Add weight or try a harder variation.`;
+    : `You hit ${ex.repMax}+ reps on every set last time. Try a harder variation, or switch Tracks to "Weight \u00d7 reps" and add weight.`;
 }
 
 // What to pre-fill for a set: last session's numbers, or the plan
 function suggestion(ex, n, last) {
   const s = last && (last.sets[n] || last.sets[last.sets.length - 1]);
-  return { weight: s ? String(s.weight || "") : ex.weight, reps: s ? String(s.reps || "") : String(ex.repMax) };
+  return {
+    weight: s ? String(s.weight || "") : ex.weight,
+    reps: s && num(s.reps) ? String(s.reps) : String(ex.repMax),
+    time: String((s && parseTime(s.time)) || ex.timeMin)
+  };
 }
 
 // ---------- Days ----------
@@ -559,7 +623,7 @@ let flashId = null;
 function findEx(i, id) { return plan[i].exercises.find(e => e.id === id); }
 
 function newExercise(name) {
-  return { id: uid(), name, category: categoryOf(name), sets: 3, repMin: 8, repMax: 12, rir: "", weight: "", notes: "" };
+  return cleanPlanExercise({ name });
 }
 
 function toggleExercise(id) {
@@ -577,16 +641,18 @@ function deleteExercise(i, id) {
 
 function updatePlan(i, id, field, value) {
   const ex = findEx(i, id);
-  if (field === "rir") ex.rir = value;
+  if (field === "rir" || field === "type") ex[field] = value;
   else ex[field] = Number(value);
   if (field === "repMin" && ex.repMin > ex.repMax) ex.repMax = ex.repMin;
   if (field === "repMax" && ex.repMax < ex.repMin) ex.repMin = ex.repMax;
+  if (field === "timeMin" && ex.timeMin > ex.timeMax) ex.timeMax = ex.timeMin;
+  if (field === "timeMax" && ex.timeMax < ex.timeMin) ex.timeMin = ex.timeMax;
   // Fewer target sets: drop the empty rows at the end of today's sets (sets with data are kept)
   const list = field === "sets" && plan[i].session && plan[i].session.sets[id];
   if (list) {
     while (list.length > ex.sets) {
       const s = list[list.length - 1];
-      if (s.done || String(s.weight).trim() || String(s.reps).trim()) break;
+      if (s.done || String(s.weight).trim() || String(s.reps).trim() || String(s.time || "").trim()) break;
       list.pop();
     }
   }
@@ -602,7 +668,7 @@ function updateNotes(i, id, value) {
 function rowsFor(day, ex) {
   const list = (day.session && day.session.sets[ex.id]) || [];
   const rows = [];
-  for (let n = 0; n < Math.max(ex.sets, list.length); n++) rows.push(list[n] || { weight: "", reps: "", done: false });
+  for (let n = 0; n < Math.max(ex.sets, list.length); n++) rows.push(list[n] || { weight: "", reps: "", time: "", done: false });
   return rows;
 }
 
@@ -610,8 +676,16 @@ function editableSets(i, id) {
   const day = plan[i], ex = findEx(i, id);
   if (!day.session) day.session = { started: new Date().toISOString(), sets: {} };
   const list = day.session.sets[id] || (day.session.sets[id] = []);
-  while (list.length < ex.sets) list.push({ weight: "", reps: "", done: false });
+  while (list.length < ex.sets) list.push({ weight: "", reps: "", time: "", done: false });
   return list;
+}
+
+// Time sets have a minutes box and a seconds box; store the total in seconds
+function updateTime(i, id, n, row) {
+  const [m, sec] = row.querySelectorAll("input");
+  const total = Math.round((num(m.value) || 0) * 60 + (num(sec.value) || 0));
+  editableSets(i, id)[n].time = total > 0 ? String(total) : "";
+  save(); // no re-render so typing isn't interrupted
 }
 
 function updateSet(i, id, n, field, value) {
@@ -627,14 +701,18 @@ function toggleDone(i, id, n) {
   } else {
     // Ticking an empty set fills in last time's numbers
     const sug = suggestion(ex, n, lastSession(ex.name));
-    if (!String(set.weight).trim() && sug.weight) set.weight = sug.weight;
-    if (!String(set.reps).trim()) set.reps = sug.reps;
-    if (!num(set.reps)) { toast("Enter the reps for this set first."); return; }
+    if (ex.type === "time") {
+      if (!parseTime(set.time)) set.time = sug.time;
+    } else {
+      if (ex.type === "weight" && !String(set.weight).trim() && sug.weight) set.weight = sug.weight;
+      if (!String(set.reps).trim()) set.reps = sug.reps;
+      if (!num(set.reps)) { toast("Enter the reps for this set first."); return; }
+    }
     set.done = true;
   }
   save(); render();
   if (set.done) {
-    const prs = sessionPRs(ex.name, editableSets(i, id));
+    const prs = sessionPRs(ex.name, editableSets(i, id).map(s => forType(ex.type, s)));
     toast(prs[n] ? "New PR on " + ex.name + "!" : "Set " + (n + 1) + " done.");
   }
 }
@@ -642,7 +720,7 @@ function toggleDone(i, id, n) {
 function addSetRow(i, id) {
   const list = editableSets(i, id);
   const prev = list[list.length - 1];
-  list.push({ weight: prev ? prev.weight : "", reps: "", done: false });
+  list.push({ weight: prev ? prev.weight : "", reps: "", time: "", done: false });
   save(); render();
 }
 
@@ -661,23 +739,23 @@ function finishWorkout(i) {
   const exercises = [];
   let prCount = 0;
   day.exercises.forEach(ex => {
-    const list = (day.session && day.session.sets[ex.id]) || [];
+    const list = ((day.session && day.session.sets[ex.id]) || []).map(s => forType(ex.type, s));
     const prs = sessionPRs(ex.name, list);
     const sets = [];
     list.forEach((s, n) => {
-      if (s.done && num(s.reps)) {
-        sets.push({ weight: String(s.weight).trim(), reps: String(s.reps).trim(), pr: prs[n] });
+      if (s.done && hasData(s)) {
+        sets.push({ weight: String(s.weight).trim(), reps: String(s.reps).trim(), time: String(s.time).trim(), pr: prs[n] });
         if (prs[n]) prCount++;
       }
     });
-    if (sets.length) exercises.push({ name: ex.name, sets, notes: ex.notes });
+    if (sets.length) exercises.push({ name: ex.name, type: ex.type, sets, notes: ex.notes });
   });
-  if (!exercises.length) { toast("Tick off at least one set (✓) before finishing."); return; }
+  if (!exercises.length) { toast("Tick off at least one set (\u2713) before finishing."); return; }
   log.unshift({ date: new Date().toISOString(), day: day.name, exercises });
   day.session = null;
   day.exercises.forEach(ex => openExercises.delete(ex.id));
   save(); render(); renderLog(); renderBackupBanner();
-  toast("Workout saved" + (prCount ? " — " + plural(prCount, "new PR") + "!" : "."));
+  toast("Workout saved" + (prCount ? " \u2014 " + plural(prCount, "new PR") + "!" : "."));
 }
 
 function discardSession(i) {
@@ -745,6 +823,9 @@ function pickFromLibrary(name) {
     const old = ex.name;
     ex.name = name;
     ex.category = categoryOf(name);
+    const oldType = ex.type;
+    ex.type = defaultType(name);
+    if (ex.type === "time" && oldType !== "time") [ex.timeMin, ex.timeMax] = defaultTime(name);
     if (day.session) delete day.session.sets[ex.id];
     flashId = ex.id;
     closeLibrary();
@@ -1021,7 +1102,7 @@ function options(values, current) {
   if (current !== "" && current != null && !list.includes(String(current))) list.push(String(current));
   return list.map(v => `<option${v === String(current) ? " selected" : ""}>${esc(v)}</option>`).join("");
 }
-function range(a, b) { const out = []; for (let n = a; n <= b; n++) out.push(n); return out; }
+function range1to(b) { const out = []; for (let n = 1; n <= b; n++) out.push(n); return out; }
 
 function render() {
   const box = el("days");
@@ -1070,16 +1151,21 @@ function renderDay(day, i) {
     </div>`;
 }
 
+function timeOptions(current) {
+  const list = TIME_OPTIONS.includes(current) ? TIME_OPTIONS : TIME_OPTIONS.concat(current).sort((a, b) => a - b);
+  return list.map(v => `<option value="${v}"${v === current ? " selected" : ""}>${fmtDur(v)}</option>`).join("");
+}
+
 function renderExercise(day, i, ex, k) {
   const id = ex.id;
   const rows = rowsFor(day, ex);
-  const prs = sessionPRs(ex.name, rows);
+  const prs = sessionPRs(ex.name, rows.map(s => forType(ex.type, s)));
   const done = rows.filter(s => s.done).length;
   const last = lastSession(ex.name);
   const hint = overloadHint(ex, last);
   const isOpen = openExercises.has(id);
-  const reps = ex.repMin === ex.repMax ? ex.repMin : ex.repMin + "–" + ex.repMax;
-  const target = `${ex.sets} × ${reps}${ex.rir ? " · " + esc(ex.rir) : ""}`;
+  const target = `${ex.sets} \u00d7 ${targetText(ex)}${ex.rir ? " \u00b7 " + esc(ex.rir) : ""}`;
+  const hintTag = { weight: "add weight", reps: "make it harder", time: "go longer" }[ex.type];
 
   const header = `
       <div class="ex-head">
@@ -1087,39 +1173,64 @@ function renderExercise(day, i, ex, k) {
         <button class="ex-title" onclick="toggleExercise('${id}')" aria-expanded="${isOpen}">
           <span class="line1"><strong>${esc(ex.name)}</strong><span class="muted">${done ? done + "/" + rows.length + " sets" : target}</span></span>
           <span class="tag">${esc(ex.category)}${prs.some(Boolean) ? ' &nbsp;<span class="pr">PR</span>' : ""}</span>
-          <span class="muted">${last ? "Last: " + esc(formatSets(last.sets)) : "No history yet"}${hint ? ' &middot; <span class="tag">&#8593; add weight</span>' : ""}</span>
+          <span class="muted">${last ? "Last: " + esc(formatSets(last.sets)) : "No history yet"}${hint ? ` &middot; <span class="tag">&#8593; ${hintTag}</span>` : ""}</span>
         </button>
       </div>`;
   if (!isOpen) return `<div class="exercise${flashId === id ? " new" : ""}">${header}</div>`;
 
   const setRows = rows.map((s, n) => {
     const sug = suggestion(ex, n, last);
-    return `
-        <div class="set-row${s.done ? " done" : ""}">
-          <span class="set-n">${n + 1}</span>
+    let inputs;
+    if (ex.type === "time") {
+      const t = parseTime(s.time), st = parseTime(sug.time);
+      inputs = `
+          <input inputmode="numeric" aria-label="Set ${n + 1} minutes" placeholder="${st ? Math.floor(st / 60) : 0}" value="${t ? (Math.floor(t / 60) || "") : ""}"
+                 oninput="updateTime(${i},'${id}',${n},this.parentElement)">
+          <span class="x">m</span>
+          <input inputmode="numeric" aria-label="Set ${n + 1} seconds" placeholder="${st ? String(st % 60).padStart(2, "0") : "sec"}" value="${t ? String(t % 60).padStart(2, "0") : ""}"
+                 oninput="updateTime(${i},'${id}',${n},this.parentElement)">
+          <span class="x">s</span>`;
+    } else if (ex.type === "reps") {
+      inputs = `
+          <input inputmode="numeric" aria-label="Set ${n + 1} reps" placeholder="${esc(sug.reps || "reps")}" value="${esc(s.reps)}"
+                 oninput="updateSet(${i},'${id}',${n},'reps',this.value)">
+          <span class="x">reps</span>`;
+    } else {
+      inputs = `
           <input inputmode="decimal" aria-label="Set ${n + 1} weight" placeholder="${esc(sug.weight || "lbs")}" value="${esc(s.weight)}"
                  oninput="updateSet(${i},'${id}',${n},'weight',this.value)">
           <span class="x">&times;</span>
           <input inputmode="numeric" aria-label="Set ${n + 1} reps" placeholder="${esc(sug.reps || "reps")}" value="${esc(s.reps)}"
-                 oninput="updateSet(${i},'${id}',${n},'reps',this.value)">
+                 oninput="updateSet(${i},'${id}',${n},'reps',this.value)">`;
+    }
+    return `
+        <div class="set-row${s.done ? " done" : ""}">
+          <span class="set-n">${n + 1}</span>${inputs}
           <button class="tick${s.done ? " on" : ""}" onclick="toggleDone(${i},'${id}',${n})" aria-pressed="${s.done}" aria-label="Set ${n + 1} done">&#10003;</button>
           ${prs[n] ? '<span class="pr">PR</span>' : ""}
           ${n >= ex.sets ? `<button class="mini danger" onclick="removeSetRow(${i},'${id}',${n})" aria-label="Remove set ${n + 1}">&times;</button>` : ""}
         </div>`;
   }).join("");
 
+  const howTo = { weight: "Weight &times; reps", reps: "Reps (no weight needed)", time: "Time (minutes and seconds)" }[ex.type];
+  const range = ex.type === "time" ? `
+          <label class="w2">Time from<select onchange="updatePlan(${i},'${id}','timeMin',this.value)">${timeOptions(ex.timeMin)}</select></label>
+          <label class="w2">Time to<select onchange="updatePlan(${i},'${id}','timeMax',this.value)">${timeOptions(ex.timeMax)}</select></label>` : `
+          <label class="w2">Reps from<select onchange="updatePlan(${i},'${id}','repMin',this.value)">${options(range1to(50), ex.repMin)}</select></label>
+          <label class="w2">Reps to<select onchange="updatePlan(${i},'${id}','repMax',this.value)">${options(range1to(50), ex.repMax)}</select></label>`;
+
   return `
     <div class="exercise open${flashId === id ? " new" : ""}">${header}
       <div class="ex-body">
         ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}
-        <div class="muted">Weight &times; reps &mdash; tick &#10003; when a set is done. An empty set fills in last time's numbers.</div>
+        <div class="muted">${howTo} &mdash; tick &#10003; when a set is done. An empty set fills in last time's numbers.</div>
         ${setRows}
         <button class="mini" onclick="addSetRow(${i},'${id}')">+ Set</button>
         <div class="plan-fields">
-          <label>Target sets<select onchange="updatePlan(${i},'${id}','sets',this.value)">${options(range(1, 10), ex.sets)}</select></label>
-          <label>Reps from<select onchange="updatePlan(${i},'${id}','repMin',this.value)">${options(range(1, 50), ex.repMin)}</select></label>
-          <label>Reps to<select onchange="updatePlan(${i},'${id}','repMax',this.value)">${options(range(1, 50), ex.repMax)}</select></label>
-          <label>Effort<select onchange="updatePlan(${i},'${id}','rir',this.value)"><option value="">&mdash;</option>${options(EFFORT_OPTIONS, ex.rir)}</select></label>
+          <label class="w3">Tracks<select onchange="updatePlan(${i},'${id}','type',this.value)">${
+            Object.entries(TRACK_TYPES).map(([v, l]) => `<option value="${v}"${v === ex.type ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
+          <label class="w3">Effort<select onchange="updatePlan(${i},'${id}','rir',this.value)"><option value="">&mdash;</option>${options(EFFORT_OPTIONS, ex.rir)}</select></label>
+          <label class="w2">Target sets<select onchange="updatePlan(${i},'${id}','sets',this.value)">${options(range1to(10), ex.sets)}</select></label>${range}
           <label class="notes">Notes<input value="${esc(ex.notes)}" oninput="updateNotes(${i},'${id}',this.value)"></label>
         </div>
         <div class="row-buttons">
