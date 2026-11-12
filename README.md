@@ -6,7 +6,7 @@ A single-file workout planner and tracker. Open `index.html` in any browser (des
 - Add, rename, copy and delete days; drag the ≡ handle to reorder days and exercises (works with touch)
 - Minimize days (tap the day name) or use Collapse all / Expand all to cut down on scrolling
 - Exercise library of 150+ exercises grouped by Push / Pull / Legs / Core / Cardio and body part.
-  Tap to add; filter by group or search (optional)
+  Tap to add (tap again to undo); filter by Recent, group or search (optional)
 - Swap an exercise for an alternative that works the same muscle group
 - Per exercise: target sets, rep range (e.g. 3 × 8–12), and effort (RIR or RPE)
 - Each exercise tracks **weight × reps**, **reps only** (bodyweight moves like hanging leg raises) or **time**
@@ -24,7 +24,8 @@ A single-file workout planner and tracker. Open `index.html` in any browser (des
 ## Other
 - **Bodyweight log** with change over time
 - **Backup reminder** if you haven't exported a backup in 7 days
-- Simple, phone-friendly layout with purple accents and a dark mode
+- Phone-friendly "training notebook" design with colour-coded muscle groups (Push red, Pull navy, Legs olive, Core maroon) and a dark mode
+- **This week** summary: days trained, sets, PRs and your last workout
 - Saves automatically in your browser. Export/Import a `.json` file for backups or to move between devices
   (older backup files still import)
 
