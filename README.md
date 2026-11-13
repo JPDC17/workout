@@ -24,7 +24,7 @@ A single-file workout planner and tracker. Open `index.html` in any browser (des
 ## Other
 - **Bodyweight log** with change over time
 - **Backup reminder** if you haven't exported a backup in 7 days
-- Phone-friendly "training notebook" design with colour-coded muscle groups (Push red, Pull navy, Legs olive, Core maroon) and a dark mode
+- Phone-friendly construction-site design (charcoal, safety yellow, construction orange, steel grey) with colour-coded muscle groups and a dark mode
 - **This week** summary: days trained, sets, PRs and your last workout
 - Saves automatically in your browser. Export/Import a `.json` file for backups or to move between devices
   (older backup files still import)
